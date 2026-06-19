@@ -1,0 +1,35 @@
+# mnemos configuration — all tunables in one place.
+# Override any value by editing here; nothing is hardcoded in source.
+
+llm:
+  provider: groq                   # groq | gemini | ollama
+  groq_model: llama-3.1-8b-instant
+  gemini_model: gemini-1.5-flash
+  ollama_model: llama3
+  ollama_base_url: http://localhost:11434
+
+embeddings:
+  model: all-MiniLM-L6-v2          # sentence-transformers, runs on CPU
+  dimension: 384
+
+vector_store:
+  path: ./data/qdrant               # embedded Qdrant, local disk
+  collection: mnemos_facts
+
+database:
+  path: ./data/mnemos.db            # SQLite
+
+memory:
+  ema_new_weight: 0.7               # EMA: new_confidence = w*new + (1-w)*prior  [OWNER CALL]
+  decay_half_life_days: 30          # retrieval score decay half-life              [OWNER CALL]
+  confidence_floor: 0.1             # facts below this are pruned (marked, not deleted)
+  similarity_threshold: 0.85        # cosine similarity to flag potential contradictions
+
+consolidation:
+  trigger: manual                   # manual | end_of_session | both              [OWNER CALL]
+  min_episodes_to_trigger: 3        # minimum new episodes before auto-trigger (if trigger != manual)
+
+user:
+  default_user_id: local_user       # single-user, stable partition key
+
+seed_demo: false                    # set true to load synthetic demo episodes on first run
