@@ -55,6 +55,42 @@ cd frontend && npm install && npm run dev
 
 Open http://localhost:5173
 
+## Use as an MCP server (Claude Desktop / Cursor / any MCP client)
+
+mnemos exposes its entire memory layer as a FastMCP server — plug it into any MCP-compatible AI assistant for persistent, provenance-tracked memory.
+
+**Tools exposed:**
+| Tool | What it does |
+|---|---|
+| `remember(text, session_id)` | Store a conversation turn in episodic memory |
+| `recall(query, top_k)` | Decay-ranked semantic retrieval from long-term memory |
+| `get_provenance(fact_id)` | Trace a fact back to exact source episodes |
+| `consolidate()` | Run the sleep cycle — extract, dedupe, resolve contradictions |
+| `list_facts()` | Browse everything the system believes |
+| `plan_learning_roadmap(topic, background)` | Generate a phased GoalFact roadmap |
+
+**Run the MCP server:**
+```bash
+# stdio (Claude Desktop / Cursor)
+.venv/Scripts/python -m src.mcp_server
+
+# HTTP/SSE (web clients)
+.venv/Scripts/python -m src.mcp_server --http --port 8001
+```
+
+**Claude Desktop config** (`claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "mnemos": {
+      "command": "C:/path/to/mnemos/.venv/Scripts/python",
+      "args": ["-m", "src.mcp_server"],
+      "cwd": "C:/path/to/mnemos"
+    }
+  }
+}
+```
+
 ## Stack
 
 | Concern | Choice |
@@ -64,6 +100,7 @@ Open http://localhost:5173
 | Vector store | Qdrant embedded/local |
 | Relational | SQLite |
 | Orchestration | LangGraph |
+| MCP server | FastMCP (memory-as-MCP) |
 | Backend | FastAPI |
 | Frontend | React + Vite |
 
