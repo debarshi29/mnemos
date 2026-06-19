@@ -1,7 +1,7 @@
 """
 FastAPI backend — all endpoints the React frontend talks to.
 Routes: /chat, /memory/facts, /memory/fact/{id}, /memory/consolidate,
-        /memory/log, /goals, /episodes
+        /memory/log, /goals, /episodes, /plan
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from src import llm_client
 from src.config import get
 from src.memory import retrieval
 from src.memory.consolidation import run_consolidation
+from src.planner.roadmap_planner import plan_roadmap
 from src.schema import Episode, FactProvenance, GoalFact, new_id
 from src.store import sqlite_store, embeddings, vector_store
 
@@ -57,6 +58,12 @@ class ChatResponse(BaseModel):
 
 class ConsolidateRequest(BaseModel):
     since_hours: Optional[int] = None   # None = all unconsolidated episodes
+
+
+class PlanRequest(BaseModel):
+    topic: str
+    background: str
+    session_id: Optional[str] = None
 
 
 # ── Startup ────────────────────────────────────────────────────────────────────
@@ -176,6 +183,35 @@ def update_goal_status(goal_id: str, status: str):
     goal.status = status
     sqlite_store.save_goal_fact(goal)
     return goal.model_dump()
+
+
+# ── Planner endpoint ──────────────────────────────────────────────────────────
+
+@app.post("/plan")
+def create_roadmap(req: PlanRequest):
+    """
+    Generate a phased learning roadmap for a topic given the user's background.
+    Runs the researcher + synthesizer LangGraph subgraph, stores GoalFacts.
+    """
+    session_id = req.session_id or str(uuid.uuid4())
+
+    # Store the planning request as an episode for provenance
+    turn_text = f"User: I want to learn {req.topic}. My background: {req.background}\nAssistant: [generating roadmap]"
+    ep = Episode(user_id=_USER_ID, session_id=session_id, text=turn_text)
+    sqlite_store.save_episode(ep)
+
+    goal_facts = plan_roadmap(
+        topic=req.topic,
+        background=req.background,
+        user_id=_USER_ID,
+        source_episode_id=ep.episode_id,
+    )
+    return {
+        "topic": req.topic,
+        "phases": [g.model_dump() for g in goal_facts],
+        "episode_id": ep.episode_id,
+        "session_id": session_id,
+    }
 
 
 # ── Demo seed ──────────────────────────────────────────────────────────────────
