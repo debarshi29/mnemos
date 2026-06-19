@@ -1,0 +1,25 @@
+{
+  "name": "002_contradiction",
+  "episodes": [
+    {"session_id": "s1", "text": "User: My favourite programming language is Python.\nAssistant: Got it."},
+    {"session_id": "s2", "text": "User: Actually my favourite programming language is Rust, not Python.\nAssistant: Noted, updated!"},
+    {"session_id": "s3", "text": "User: I have been coding for 5 years.\nAssistant: That is solid experience."}
+  ],
+  "planted_facts": [
+    "User's favourite programming language is Rust",
+    "User has been coding for 5 years"
+  ],
+  "contradictions": [
+    {
+      "a": "User's favourite programming language is Python",
+      "b": "User's favourite programming language is Rust",
+      "expected_winner": "b"
+    }
+  ],
+  "provenance_checks": [
+    {
+      "fact_hint": "favourite programming language is Rust",
+      "episode_hint": "favourite programming language is Rust"
+    }
+  ]
+}

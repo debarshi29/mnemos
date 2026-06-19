@@ -1,0 +1,24 @@
+{
+  "name": "001_basic_recall",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I'm learning Python for data science.\nAssistant: Great!"},
+    {"session_id": "s1", "text": "User: I already know JavaScript and React.\nAssistant: Useful background."},
+    {"session_id": "s2", "text": "User: I prefer hands-on projects over reading.\nAssistant: Noted!"},
+    {"session_id": "s2", "text": "User: I find statistics difficult.\nAssistant: We can work on that."},
+    {"session_id": "s3", "text": "User: I have 1 hour per day to study.\nAssistant: Consistent practice compounds."}
+  ],
+  "planted_facts": [
+    "User is learning Python for data science",
+    "User knows JavaScript",
+    "User prefers hands-on projects",
+    "User finds statistics difficult",
+    "User has 1 hour per day to study"
+  ],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User is learning Python",
+      "episode_hint": "learning Python for data science"
+    }
+  ]
+}
