@@ -123,7 +123,7 @@ def chat(req: ChatRequest):
 @app.get("/memory/facts")
 def list_facts(include_superseded: bool = False):
     facts = sqlite_store.get_facts(include_superseded=include_superseded)
-    return [f.model_dump() for f in facts]
+    return [f.model_dump(mode="json") for f in facts]
 
 
 @app.get("/memory/fact/{fact_id}")
@@ -132,13 +132,14 @@ def get_fact_with_provenance(fact_id: str):
     if not fact:
         raise HTTPException(status_code=404, detail="Fact not found")
     ep_ids = sqlite_store.get_fact_provenance(fact_id)
-    source_episodes = []
-    for eid in ep_ids:
-        eps = sqlite_store.get_episodes(user_id=_USER_ID, limit=1000)
-        ep = next((e for e in eps if e.episode_id == eid), None)
-        if ep:
-            source_episodes.append(ep.model_dump())
-    return {"fact": fact.model_dump(), "source_episodes": source_episodes}
+    # load episodes once, not once per ep_id
+    all_eps = {e.episode_id: e for e in sqlite_store.get_episodes(user_id=_USER_ID, limit=2000)}
+    source_episodes = [
+        all_eps[eid].model_dump(mode="json")
+        for eid in ep_ids
+        if eid in all_eps
+    ]
+    return {"fact": fact.model_dump(mode="json"), "source_episodes": source_episodes}
 
 
 @app.post("/memory/consolidate")
@@ -147,13 +148,13 @@ def consolidate(req: ConsolidateRequest = ConsolidateRequest()):
     if not episodes:
         return {"message": "No episodes to consolidate."}
     log = run_consolidation(user_id=_USER_ID, episodes=episodes)
-    return log.model_dump()
+    return log.model_dump(mode="json")
 
 
 @app.get("/memory/log")
 def consolidation_log():
     entries = sqlite_store.get_consolidation_log(user_id=_USER_ID)
-    return [e.model_dump() for e in entries]
+    return [e.model_dump(mode="json") for e in entries]
 
 
 # ── Episodes endpoint ──────────────────────────────────────────────────────────
@@ -161,7 +162,7 @@ def consolidation_log():
 @app.get("/episodes")
 def list_episodes(limit: int = 50):
     eps = sqlite_store.get_episodes(user_id=_USER_ID, limit=limit)
-    return [e.model_dump() for e in eps]
+    return [e.model_dump(mode="json") for e in eps]
 
 
 # ── Goals endpoint ─────────────────────────────────────────────────────────────
@@ -169,7 +170,7 @@ def list_episodes(limit: int = 50):
 @app.get("/goals")
 def list_goals():
     goals = sqlite_store.get_goal_facts(user_id=_USER_ID)
-    return [g.model_dump() for g in goals]
+    return [g.model_dump(mode="json") for g in goals]
 
 
 @app.patch("/goals/{goal_id}/status")
@@ -182,7 +183,7 @@ def update_goal_status(goal_id: str, status: str):
         raise HTTPException(status_code=400, detail="Invalid status")
     goal.status = status
     sqlite_store.save_goal_fact(goal)
-    return goal.model_dump()
+    return goal.model_dump(mode="json")
 
 
 # ── Planner endpoint ──────────────────────────────────────────────────────────
@@ -208,7 +209,7 @@ def create_roadmap(req: PlanRequest):
     )
     return {
         "topic": req.topic,
-        "phases": [g.model_dump() for g in goal_facts],
+        "phases": [g.model_dump(mode="json") for g in goal_facts],
         "episode_id": ep.episode_id,
         "session_id": session_id,
     }
