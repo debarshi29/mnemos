@@ -38,25 +38,86 @@ def fetch_page(url: str) -> str:
     return textwrap.shorten(text, width=3000, placeholder=" …[truncated]")
 
 
+# ArXiv categories that are relevant for CS / ML / AI topics.
+# Papers outside these are almost certainly off-topic for a learning roadmap.
+_CS_ML_CATS = {
+    "cs.LG", "cs.AI", "cs.CL", "cs.CV", "cs.NE", "cs.IR", "cs.HC",
+    "cs.RO", "cs.SE", "cs.CR", "stat.ML", "econ.EM", "q-bio.NC",
+}
+
+import re as _re
+
+
+def _clean_arxiv_url(entry_id: str) -> str:
+    return _re.sub(r'v\d+$', '', entry_id.replace('http://', 'https://'))
+
+
+def _is_relevant(paper) -> bool:
+    """Return True if the paper belongs to a CS/ML category."""
+    cats = set(paper.categories)
+    return bool(cats & _CS_ML_CATS)
+
+
 @tool
-def arxiv_search(query: str) -> str:
-    """Search ArXiv for papers relevant to a learning topic. Returns titles, authors, abstracts."""
+def arxiv_search(query: str, categories: str = "cs.LG cs.AI cs.CL stat.ML") -> str:
+    """
+    Search ArXiv for papers relevant to a learning topic.
+
+    Args:
+        query: Search terms — be specific (e.g. 'transformer attention mechanism tutorial').
+        categories: Space-separated ArXiv category codes to restrict results.
+                    Defaults to CS/ML categories. Use 'cs.CL' for NLP, 'cs.CV' for vision,
+                    'cs.LG stat.ML' for general ML. Do NOT change for non-technical topics.
+
+    Returns:
+        Titles, authors, abstracts, and stable URLs of relevant papers.
+    """
     import arxiv
+
+    # Build a category-scoped query: (user terms) AND (cat:X OR cat:Y ...)
+    cat_parts = " OR ".join(f"cat:{c}" for c in categories.split())
+    scoped_query = f"({query}) AND ({cat_parts})"
+
     client = arxiv.Client()
-    search = arxiv.Search(query=query, max_results=4, sort_by=arxiv.SortCriterion.Relevance)
+    # fetch extra to allow post-filtering without running out of results
+    search = arxiv.Search(
+        query=scoped_query,
+        max_results=10,
+        sort_by=arxiv.SortCriterion.Relevance,
+    )
+
     results = []
     for paper in client.results(search):
+        if not _is_relevant(paper):
+            continue  # skip physics / bio / math papers
         abstract = textwrap.shorten(paper.summary, width=400, placeholder=" …")
-        # use the stable non-versioned abs URL so dedup works correctly
-        import re as _re
-        clean_url = _re.sub(r'v\d+$', '', paper.entry_id.replace('http://', 'https://'))
         results.append(
             f"Title: {paper.title}\n"
+            f"Categories: {', '.join(paper.categories)}\n"
             f"Authors: {', '.join(a.name for a in paper.authors[:3])}\n"
             f"Published: {paper.published.strftime('%Y-%m')}\n"
-            f"URL: {clean_url}\n"
+            f"URL: {_clean_arxiv_url(paper.entry_id)}\n"
             f"Abstract: {abstract}"
         )
+        if len(results) == 4:
+            break
+
+    if not results:
+        # Fallback: retry without the category constraint — better than returning nothing
+        fallback = arxiv.Search(query=query, max_results=4, sort_by=arxiv.SortCriterion.Relevance)
+        for paper in client.results(fallback):
+            abstract = textwrap.shorten(paper.summary, width=400, placeholder=" …")
+            results.append(
+                f"Title: {paper.title}\n"
+                f"Categories: {', '.join(paper.categories)}\n"
+                f"Authors: {', '.join(a.name for a in paper.authors[:3])}\n"
+                f"Published: {paper.published.strftime('%Y-%m')}\n"
+                f"URL: {_clean_arxiv_url(paper.entry_id)}\n"
+                f"Abstract: {abstract}"
+            )
+            if len(results) == 4:
+                break
+
     return "\n---\n".join(results) if results else "No ArXiv papers found."
 
 

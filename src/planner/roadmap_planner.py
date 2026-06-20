@@ -58,11 +58,16 @@ class PlannerState(TypedDict):
 
 _RESEARCHER_SYSTEM = """You are a research assistant helping build a personalized learning roadmap.
 Given a topic and a learner's background, use the available tools to:
-1. Search for authoritative learning resources and curricula for the topic (use web_search)
-2. Find MULTIPLE different ArXiv papers covering different aspects of the topic (run arxiv_search at least twice with different queries)
-3. Fetch 1-2 pages for richer content if needed
+1. Use web_search to find authoritative learning resources, tutorials, and curricula for the topic.
+2. Use arxiv_search at least TWICE with DIFFERENT specific queries to find papers covering different aspects of the topic.
+   - Always pass the correct 'categories' parameter: use 'cs.LG cs.AI' for ML/AI, 'cs.CL' for NLP,
+     'cs.CV' for computer vision, 'cs.CR' for security, 'cs.SE' for software engineering, etc.
+   - Make each arxiv query narrow and specific to a DIFFERENT sub-aspect (e.g. first search
+     "mechanistic interpretability circuits", then "sparse autoencoders feature extraction").
+   - NEVER use a broad physics/math query — always include relevant CS category codes.
+3. Fetch 1-2 pages for richer content if needed.
 
-Goal: gather DIVERSE resources — different URLs, different papers, different sites — so each learning phase can have its own unique reference material.
+Goal: gather DIVERSE resources — different URLs, different papers — so each learning phase gets unique references.
 Be efficient — 4 to 6 tool calls total."""
 
 _SYNTHESIZER_SYSTEM = """You are a learning roadmap designer.
