@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+::selection { background: #c5e063; color: #101a13; }
+
+html, body, #root {
+  height: 100%;
+  background: #101a13;
+  color: #e9efe4;
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #101a13; }
+::-webkit-scrollbar-thumb { background: #2b4231; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8aa83f; }
+
+button { cursor: pointer; border: none; background: none; font-family: inherit; color: inherit; }
+input, textarea { font-family: 'Fraunces', serif; color: #e9efe4; background: transparent; border: none; outline: none; }
+a { color: #c5e063; text-decoration: none; }
+a:hover { text-decoration: underline; }
