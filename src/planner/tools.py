@@ -1,9 +1,10 @@
 """
-Planner tools: web search (DuckDuckGo), page fetch, ArXiv search.
+Planner tools: web search (Brave/DuckDuckGo), page fetch, ArXiv search, GitHub search.
 Wrapped as LangChain tools so LangGraph's ToolNode can invoke them.
 """
 
 from __future__ import annotations
+import os
 import textwrap
 import httpx
 from langchain_core.tools import tool
@@ -11,13 +12,77 @@ from langchain_core.tools import tool
 
 @tool
 def web_search(query: str) -> str:
-    """Search the web with DuckDuckGo. Returns titles, URLs, and snippets."""
+    """Search the web. Uses Brave Search if BRAVE_API_KEY is set, otherwise DuckDuckGo."""
+    api_key = os.environ.get("BRAVE_API_KEY", "")
+    if api_key:
+        try:
+            resp = httpx.get(
+                "https://api.search.brave.com/res/v1/web/search",
+                params={"q": query, "count": 5},
+                headers={
+                    "Accept": "application/json",
+                    "Accept-Encoding": "gzip",
+                    "X-Subscription-Token": api_key,
+                },
+                timeout=10,
+                follow_redirects=True,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            items = data.get("web", {}).get("results", [])
+            if items:
+                formatted = [
+                    f"Title: {r['title']}\nURL: {r['url']}\nSnippet: {r.get('description', '')}"
+                    for r in items
+                ]
+                return "\n---\n".join(formatted)
+        except Exception:
+            pass  # fall through to DuckDuckGo
+
     from duckduckgo_search import DDGS
     results = []
     with DDGS() as ddgs:
         for r in ddgs.text(query, max_results=5):
             results.append(f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}\n")
     return "\n---\n".join(results) if results else "No results found."
+
+
+@tool
+def github_search(query: str) -> str:
+    """
+    Search GitHub for repositories related to a learning topic.
+    Returns repo names, star counts, descriptions, and URLs.
+    Great for finding reference implementations, course repos, and tutorials.
+    """
+    headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    try:
+        resp = httpx.get(
+            "https://api.github.com/search/repositories",
+            params={"q": query, "sort": "stars", "order": "desc", "per_page": 5},
+            headers=headers,
+            timeout=10,
+        )
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+        if not items:
+            return "No GitHub repositories found."
+        results = []
+        for r in items:
+            topics = ", ".join(r.get("topics", [])[:5]) or "—"
+            results.append(
+                f"Repo: {r['full_name']}\n"
+                f"Stars: {r['stargazers_count']:,}\n"
+                f"Description: {r.get('description') or 'No description'}\n"
+                f"Topics: {topics}\n"
+                f"URL: {r['html_url']}"
+            )
+        return "\n---\n".join(results)
+    except Exception as e:
+        return f"GitHub search failed: {e}"
 
 
 @tool
@@ -121,4 +186,4 @@ def arxiv_search(query: str, categories: str = "cs.LG cs.AI cs.CL stat.ML") -> s
     return "\n---\n".join(results) if results else "No ArXiv papers found."
 
 
-PLANNER_TOOLS = [web_search, fetch_page, arxiv_search]
+PLANNER_TOOLS = [web_search, fetch_page, arxiv_search, github_search]

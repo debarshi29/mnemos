@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getFacts, getFactWithProvenance, triggerConsolidate } from '../api';
+import { getFacts, getFactWithProvenance, triggerConsolidate, ingestSource } from '../api';
 
 const LABEL = {
   fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.6rem',
@@ -68,6 +68,29 @@ const S = {
     width: `${conf * 100}%`,
     background: `linear-gradient(90deg, #8aa83f, #c5e063)`,
   }),
+  ingestBar: {
+    borderBottom: '1px solid #2b4231', padding: '0.6rem 1.25rem',
+    display: 'flex', flexDirection: 'column', gap: '0.4rem', background: '#13201a',
+  },
+  ingestRow: { display: 'flex', gap: '0.4rem', alignItems: 'center' },
+  ingestInput: {
+    flex: 1, fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.7rem',
+    background: '#1c2e21', border: '1px solid #2b4231', borderRadius: 6,
+    padding: '0.3rem 0.6rem', color: '#e9efe4', outline: 'none',
+  },
+  ingestKind: {
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.6rem', background: '#1c2e21',
+    border: '1px solid #2b4231', borderRadius: 6, padding: '0.3rem 0.5rem',
+    color: '#9ab09a', cursor: 'pointer', outline: 'none',
+  },
+  ingestBtn: (busy) => ({
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.6rem',
+    textTransform: 'uppercase', letterSpacing: '0.1em',
+    padding: '0.3rem 0.7rem', borderRadius: 6, cursor: busy ? 'default' : 'pointer',
+    background: busy ? '#2b4231' : 'rgba(197,224,99,0.12)',
+    border: '1px solid rgba(197,224,99,0.3)', color: busy ? '#9ab09a' : '#c5e063',
+  }),
+  ingestMsg: { fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.65rem' },
   flagBadge: {
     fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.55rem',
     color: '#e9efe4', background: 'rgba(233,239,228,0.1)',
@@ -110,6 +133,10 @@ export default function MemoryInspector() {
   const [consolidating, setConsolidating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [ingestSrc, setIngestSrc] = useState('');
+  const [ingestKind, setIngestKind] = useState('file');
+  const [ingesting, setIngesting] = useState(false);
+  const [ingestMsg, setIngestMsg] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -139,6 +166,20 @@ export default function MemoryInspector() {
     setConsolidating(false);
   };
 
+  const ingest = async () => {
+    if (!ingestSrc.trim()) return;
+    setIngesting(true);
+    setIngestMsg(null);
+    try {
+      const res = await ingestSource(ingestSrc.trim(), ingestKind);
+      setIngestMsg({ ok: true, text: `✓ Ingested "${res.label}" (${res.chars.toLocaleString()} chars). Run consolidate to extract facts.` });
+      setIngestSrc('');
+    } catch (e) {
+      setIngestMsg({ ok: false, text: `✗ ${e?.response?.data?.detail || e?.message || 'Ingest failed'}` });
+    }
+    setIngesting(false);
+  };
+
   const filtered = facts.filter(f => {
     if (filter === 'all') return true;
     if (filter === 'flagged') return f.flagged;
@@ -160,6 +201,30 @@ export default function MemoryInspector() {
           {FILTERS.map(f => (
             <button key={f} style={S.filterPill(filter === f)} onClick={() => setFilter(f)}>{f}</button>
           ))}
+        </div>
+
+        <div style={S.ingestBar}>
+          <div style={S.ingestRow}>
+            <select style={S.ingestKind} value={ingestKind} onChange={e => setIngestKind(e.target.value)}>
+              <option value="file">file</option>
+              <option value="github">github</option>
+            </select>
+            <input
+              style={S.ingestInput}
+              placeholder={ingestKind === 'file' ? '/path/to/file.md' : 'https://github.com/owner/repo'}
+              value={ingestSrc}
+              onChange={e => setIngestSrc(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && ingest()}
+            />
+            <button style={S.ingestBtn(ingesting)} onClick={ingest} disabled={ingesting}>
+              {ingesting ? '…' : '↑ ingest'}
+            </button>
+          </div>
+          {ingestMsg && (
+            <span style={{ ...S.ingestMsg, color: ingestMsg.ok ? '#8aa83f' : '#e05555' }}>
+              {ingestMsg.text}
+            </span>
+          )}
         </div>
 
         <div style={S.factList}>

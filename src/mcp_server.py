@@ -21,9 +21,14 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
 """
 
 from __future__ import annotations
+import os
+import re
 import sys
+import textwrap
 from datetime import datetime, timezone
 from pathlib import Path
+
+import httpx
 
 # ensure repo root is on sys.path when run as __main__
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -232,6 +237,131 @@ def plan_learning_roadmap(topic: str, background: str) -> str:
             f"  goal_id={gf.goal_id}"
         )
     return "\n".join(lines)
+
+
+# ── Ingest tools ──────────────────────────────────────────────────────────────
+
+_TEXT_SUFFIXES = {
+    ".txt", ".md", ".markdown", ".rst", ".py", ".js", ".ts", ".jsx", ".tsx",
+    ".json", ".yaml", ".yml", ".toml", ".csv", ".html", ".xml", ".sh",
+}
+
+
+@mcp.tool()
+def ingest_file(path: str, session_id: str = "file_ingest") -> str:
+    """
+    Read a local file and store its content as an episodic memory so the
+    consolidation cycle can extract facts from it.
+
+    Supports plain text (.txt, .md, .py, .js, .ts, .json, .yaml, …) and PDF.
+    Large files are truncated to 8 000 chars.
+
+    Args:
+        path: Absolute or ~ -relative path to the file.
+        session_id: Tag for grouping related ingestion sessions.
+
+    Returns:
+        Confirmation with the episode_id, or an error message.
+    """
+    p = Path(path).expanduser().resolve()
+    if not p.exists():
+        return f"File not found: {path}"
+    if p.is_dir():
+        return f"{path} is a directory — pass a file path."
+
+    suffix = p.suffix.lower()
+
+    if suffix == ".pdf":
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(str(p))
+            raw = "\n".join(page.extract_text() or "" for page in reader.pages)
+        except ImportError:
+            return "PDF support requires pypdf: uv pip install pypdf"
+        except Exception as e:
+            return f"Failed to parse PDF: {e}"
+    elif suffix in _TEXT_SUFFIXES or suffix == "":
+        try:
+            raw = p.read_text(encoding="utf-8", errors="replace")
+        except Exception as e:
+            return f"Failed to read file: {e}"
+    else:
+        return f"Unsupported file type: {suffix}. Supported: {', '.join(sorted(_TEXT_SUFFIXES))} and .pdf"
+
+    if len(raw) > 8000:
+        raw = raw[:8000] + f"\n\n[…truncated — original {len(raw):,} chars]"
+
+    sqlite_store.init_db()
+    ep = Episode(
+        user_id=_USER_ID,
+        session_id=session_id,
+        text=f"[Ingested file: {p.name}]\n\n{raw}",
+    )
+    sqlite_store.save_episode(ep)
+    return (
+        f"Ingested '{p.name}' ({len(raw):,} chars) → episode_id={ep.episode_id}\n"
+        "Call consolidate() to extract facts from this file."
+    )
+
+
+@mcp.tool()
+def ingest_github(repo_url: str, session_id: str = "github_ingest") -> str:
+    """
+    Fetch a GitHub repository's README and metadata and store them as an
+    episodic memory. Useful for building context about projects you're studying.
+
+    Accepts any GitHub URL, e.g. https://github.com/owner/repo
+
+    Args:
+        repo_url: Full GitHub URL of the repository.
+        session_id: Tag for grouping related ingestion sessions.
+
+    Returns:
+        Confirmation with the episode_id, or an error message.
+    """
+    m = re.search(r"github\.com[/:]([^/\s]+)/([^/\s.]+)", repo_url)
+    if not m:
+        return f"Cannot parse a GitHub owner/repo from: {repo_url}"
+
+    owner, repo = m.group(1), m.group(2).removesuffix(".git")
+    api_base = f"https://api.github.com/repos/{owner}/{repo}"
+
+    headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    try:
+        meta = httpx.get(api_base, headers=headers, timeout=10).raise_for_status().json()
+        readme_resp = httpx.get(
+            f"{api_base}/readme",
+            headers={**headers, "Accept": "application/vnd.github.raw+json"},
+            timeout=10,
+        )
+        readme = textwrap.shorten(readme_resp.text, width=4000, placeholder=" …[truncated]") \
+            if readme_resp.status_code == 200 else "No README available."
+
+        text = (
+            f"GitHub Repository: {meta['full_name']}\n"
+            f"Description: {meta.get('description') or '—'}\n"
+            f"Stars: {meta.get('stargazers_count', 0):,}  Forks: {meta.get('forks_count', 0):,}\n"
+            f"Language: {meta.get('language') or '—'}\n"
+            f"Topics: {', '.join(meta.get('topics', [])) or '—'}\n"
+            f"URL: {meta['html_url']}\n\n"
+            f"README:\n{readme}"
+        )
+    except httpx.HTTPStatusError as e:
+        return f"GitHub API error {e.response.status_code}: {e.response.text[:200]}"
+    except Exception as e:
+        return f"Failed to fetch repo: {e}"
+
+    sqlite_store.init_db()
+    ep = Episode(user_id=_USER_ID, session_id=session_id, text=text)
+    sqlite_store.save_episode(ep)
+    return (
+        f"Ingested {meta['full_name']} → episode_id={ep.episode_id}\n"
+        "Call consolidate() to extract facts from this repo."
+    )
 
 
 # ── Resources ──────────────────────────────────────────────────────────────────

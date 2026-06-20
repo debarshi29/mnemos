@@ -1,7 +1,7 @@
 """
 FastAPI backend — all endpoints the React frontend talks to.
 Routes: /chat, /memory/facts, /memory/fact/{id}, /memory/consolidate,
-        /memory/log, /goals, /episodes, /plan
+        /memory/ingest, /memory/log, /goals, /episodes, /plan
 """
 
 from __future__ import annotations
@@ -63,6 +63,12 @@ class ConsolidateRequest(BaseModel):
 class PlanRequest(BaseModel):
     topic: str
     background: str
+    session_id: Optional[str] = None
+
+
+class IngestRequest(BaseModel):
+    source: str                     # file path or GitHub URL
+    kind: str = "file"              # "file" | "github"
     session_id: Optional[str] = None
 
 
@@ -162,6 +168,73 @@ def consolidate(req: ConsolidateRequest = ConsolidateRequest()):
 def consolidation_log():
     entries = sqlite_store.get_consolidation_log(user_id=_USER_ID)
     return [e.model_dump(mode="json") for e in entries]
+
+
+@app.post("/memory/ingest")
+def ingest_source(req: IngestRequest):
+    """Ingest a local file or GitHub repo as an episodic memory."""
+    import os, re, textwrap, httpx as _httpx
+    from pathlib import Path as _Path
+
+    session_id = req.session_id or "ingest_session"
+
+    if req.kind == "file":
+        p = _Path(req.source).expanduser().resolve()
+        if not p.exists():
+            raise HTTPException(status_code=404, detail=f"File not found: {req.source}")
+        suffix = p.suffix.lower()
+        _TEXT = {".txt",".md",".rst",".py",".js",".ts",".jsx",".tsx",
+                 ".json",".yaml",".yml",".toml",".csv",".html",".sh",""}
+        if suffix == ".pdf":
+            try:
+                import pypdf
+                reader = pypdf.PdfReader(str(p))
+                raw = "\n".join(pg.extract_text() or "" for pg in reader.pages)
+            except ImportError:
+                raise HTTPException(status_code=422, detail="pypdf not installed")
+        elif suffix in _TEXT:
+            raw = p.read_text(encoding="utf-8", errors="replace")
+        else:
+            raise HTTPException(status_code=422, detail=f"Unsupported file type: {suffix}")
+        if len(raw) > 8000:
+            raw = raw[:8000] + f"\n\n[…truncated — {len(raw):,} chars total]"
+        text = f"[Ingested file: {p.name}]\n\n{raw}"
+        label = p.name
+
+    elif req.kind == "github":
+        m = re.search(r"github\.com[/:]([^/\s]+)/([^/\s.]+)", req.source)
+        if not m:
+            raise HTTPException(status_code=422, detail="Cannot parse GitHub owner/repo from URL")
+        owner, repo = m.group(1), m.group(2).removesuffix(".git")
+        headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+        token = os.environ.get("GITHUB_TOKEN", "")
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        try:
+            meta = _httpx.get(f"https://api.github.com/repos/{owner}/{repo}",
+                               headers=headers, timeout=10).raise_for_status().json()
+            readme_r = _httpx.get(f"https://api.github.com/repos/{owner}/{repo}/readme",
+                                   headers={**headers, "Accept": "application/vnd.github.raw+json"},
+                                   timeout=10)
+            readme = textwrap.shorten(readme_r.text, 4000, placeholder=" …") \
+                if readme_r.status_code == 200 else "No README."
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=str(e))
+        text = (
+            f"GitHub Repository: {meta['full_name']}\n"
+            f"Description: {meta.get('description') or '—'}\n"
+            f"Stars: {meta.get('stargazers_count',0):,}  Language: {meta.get('language','—')}\n"
+            f"Topics: {', '.join(meta.get('topics',[])) or '—'}\n"
+            f"URL: {meta['html_url']}\n\nREADME:\n{readme}"
+        )
+        label = meta["full_name"]
+
+    else:
+        raise HTTPException(status_code=422, detail="kind must be 'file' or 'github'")
+
+    ep = Episode(user_id=_USER_ID, session_id=session_id, text=text)
+    sqlite_store.save_episode(ep)
+    return {"episode_id": ep.episode_id, "label": label, "chars": len(text)}
 
 
 # ── Episodes endpoint ──────────────────────────────────────────────────────────

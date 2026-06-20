@@ -28,3 +28,6 @@ export const updateGoalStatus = (goalId, status) =>
 
 export const createRoadmap = (topic, background, sessionId) =>
   http.post('/plan', { topic, background, session_id: sessionId }).then(r => r.data);
+
+export const ingestSource = (source, kind) =>
+  http.post('/memory/ingest', { source, kind }).then(r => r.data);
