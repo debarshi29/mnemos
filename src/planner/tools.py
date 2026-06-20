@@ -1,5 +1,5 @@
 """
-Planner tools: web search (Brave/DuckDuckGo), page fetch, ArXiv search, GitHub search.
+Planner tools: web search (Tavily/DuckDuckGo), page fetch, ArXiv search, GitHub search.
 Wrapped as LangChain tools so LangGraph's ToolNode can invoke them.
 """
 
@@ -12,30 +12,23 @@ from langchain_core.tools import tool
 
 @tool
 def web_search(query: str) -> str:
-    """Search the web. Uses Brave Search if BRAVE_API_KEY is set, otherwise DuckDuckGo."""
-    api_key = os.environ.get("BRAVE_API_KEY", "")
+    """Search the web. Uses Tavily if TAVILY_API_KEY is set (free tier: 1k/mo), otherwise DuckDuckGo."""
+    api_key = os.environ.get("TAVILY_API_KEY", "")
     if api_key:
         try:
-            resp = httpx.get(
-                "https://api.search.brave.com/res/v1/web/search",
-                params={"q": query, "count": 5},
-                headers={
-                    "Accept": "application/json",
-                    "Accept-Encoding": "gzip",
-                    "X-Subscription-Token": api_key,
-                },
-                timeout=10,
-                follow_redirects=True,
+            resp = httpx.post(
+                "https://api.tavily.com/search",
+                json={"query": query, "max_results": 5, "search_depth": "basic"},
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=15,
             )
             resp.raise_for_status()
-            data = resp.json()
-            items = data.get("web", {}).get("results", [])
+            items = resp.json().get("results", [])
             if items:
-                formatted = [
-                    f"Title: {r['title']}\nURL: {r['url']}\nSnippet: {r.get('description', '')}"
+                return "\n---\n".join(
+                    f"Title: {r['title']}\nURL: {r['url']}\nSnippet: {r.get('content', '')[:300]}"
                     for r in items
-                ]
-                return "\n---\n".join(formatted)
+                )
         except Exception:
             pass  # fall through to DuckDuckGo
 
