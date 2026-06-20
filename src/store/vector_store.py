@@ -4,12 +4,8 @@ Handles upsert, similarity search, and deletion by fact_id.
 """
 
 from __future__ import annotations
-import numpy as np
 from qdrant_client import QdrantClient
-from qdrant_client.models import (
-    Distance, PointStruct, VectorParams,
-    Filter, FieldCondition, MatchValue,
-)
+from qdrant_client.models import Distance, PointStruct, VectorParams, PointIdsList
 from src.config import get
 
 _COLLECTION = get("vector_store.collection", "mnemos_facts")
@@ -50,18 +46,19 @@ def upsert_fact(fact_id: str, embedding: list[float], payload: dict):
 def search_similar(query_embedding: list[float], top_k: int = 10, score_threshold: float = 0.0) -> list[dict]:
     """
     Returns list of {"fact_id", "score", "payload"} sorted by cosine similarity descending.
+    Uses query_points (qdrant-client >= 1.7).
     """
     client = _get_client()
-    results = client.search(
+    response = client.query_points(
         collection_name=_COLLECTION,
-        query_vector=query_embedding,
+        query=query_embedding,
         limit=top_k,
-        score_threshold=score_threshold,
+        score_threshold=score_threshold if score_threshold > 0.0 else None,
         with_payload=True,
     )
     return [
         {"fact_id": r.payload["fact_id"], "score": r.score, "payload": r.payload}
-        for r in results
+        for r in response.points
     ]
 
 
@@ -69,7 +66,7 @@ def delete_fact(fact_id: str):
     client = _get_client()
     client.delete(
         collection_name=_COLLECTION,
-        points_selector=[_id_to_uint(fact_id)],
+        points_selector=PointIdsList(points=[_id_to_uint(fact_id)]),
     )
 
 

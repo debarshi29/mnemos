@@ -31,9 +31,13 @@ def retrieve(query: str, top_k: int = 5, include_superseded: bool = False) -> li
     """
     Return (Fact, score) pairs, sorted by decay-adjusted similarity descending.
     score = similarity * exp(-lambda * age_days)
+    Returns empty list if no facts exist yet (before first consolidation).
     """
     query_vec = embeddings.embed(query)
-    candidates = vector_store.search_similar(query_vec, top_k=top_k * 3)
+    try:
+        candidates = vector_store.search_similar(query_vec, top_k=top_k * 3)
+    except Exception:
+        return []
 
     results: list[tuple[Fact, float]] = []
     for c in candidates:
