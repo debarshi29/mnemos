@@ -58,12 +58,12 @@ class PlannerState(TypedDict):
 
 _RESEARCHER_SYSTEM = """You are a research assistant helping build a personalized learning roadmap.
 Given a topic and a learner's background, use the available tools to:
-1. Search for authoritative learning resources and curricula for the topic
-2. Find relevant ArXiv papers if the topic is technical/academic
-3. Fetch 1-2 pages for deeper content if needed
+1. Search for authoritative learning resources and curricula for the topic (use web_search)
+2. Find MULTIPLE different ArXiv papers covering different aspects of the topic (run arxiv_search at least twice with different queries)
+3. Fetch 1-2 pages for richer content if needed
 
-Gather enough to outline 4-6 concrete learning phases.
-Be efficient — 3 to 5 tool calls total is enough."""
+Goal: gather DIVERSE resources — different URLs, different papers, different sites — so each learning phase can have its own unique reference material.
+Be efficient — 4 to 6 tool calls total."""
 
 _SYNTHESIZER_SYSTEM = """You are a learning roadmap designer.
 Given research about a topic and the learner's background, produce a phased roadmap.
@@ -78,7 +78,10 @@ Rules:
 - 4 to 6 phases, ordered from foundational to advanced
 - Each phase_content is one concrete milestone (1-2 sentences, actionable)
 - Tailor difficulty to the learner's stated background
-- Include at least one ArXiv paper as a milestone if the topic is technical"""
+- CRITICAL: every phase must have DIFFERENT resources — never repeat the same URL across phases
+- Assign resources that are most relevant to THAT specific phase's content
+- If you only found one ArXiv paper, use web search URLs for the other phases
+- Do NOT pad resources with the same link just to fill slots — one good unique URL beats two repeated ones"""
 
 
 # ── Nodes ──────────────────────────────────────────────────────────────────────
@@ -194,6 +197,19 @@ def plan_roadmap(
         import re
         m = re.search(r"\[.*\]", raw, re.DOTALL)
         phases = json.loads(m.group()) if m else []
+
+    # Deduplicate resources across phases — remove any URL that already appeared in an earlier phase
+    seen_urls: set[str] = set()
+    for phase in phases:
+        raw_resources = phase.get("resources", [])
+        unique = []
+        for url in raw_resources:
+            # normalise: strip trailing version suffix (e.g. arxiv.org/abs/1234v2 → /abs/1234)
+            normalised = url.rstrip("/").rstrip("v0123456789") if "arxiv.org" in url else url
+            if normalised not in seen_urls:
+                seen_urls.add(normalised)
+                unique.append(url)
+        phase["resources"] = unique
 
     goal_facts: list[GoalFact] = []
     for phase in phases:

@@ -47,11 +47,14 @@ def arxiv_search(query: str) -> str:
     results = []
     for paper in client.results(search):
         abstract = textwrap.shorten(paper.summary, width=400, placeholder=" …")
+        # use the stable non-versioned abs URL so dedup works correctly
+        import re as _re
+        clean_url = _re.sub(r'v\d+$', '', paper.entry_id.replace('http://', 'https://'))
         results.append(
             f"Title: {paper.title}\n"
             f"Authors: {', '.join(a.name for a in paper.authors[:3])}\n"
             f"Published: {paper.published.strftime('%Y-%m')}\n"
-            f"URL: {paper.entry_id}\n"
+            f"URL: {clean_url}\n"
             f"Abstract: {abstract}"
         )
     return "\n---\n".join(results) if results else "No ArXiv papers found."
