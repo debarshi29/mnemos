@@ -17,7 +17,7 @@ const S = {
   list: {
     width: 320, flexShrink: 0, borderRight: '1px solid #2b4231',
     display: 'flex', flexDirection: 'column', background: '#16241a',
-    minHeight: 0,
+    minHeight: 0, overflow: 'hidden',
   },
   listHeader: {
     padding: '1.25rem 1.25rem 0.75rem',
@@ -32,7 +32,7 @@ const S = {
     color: '#c5e063', borderRadius: 99, padding: '0.25rem 0.65rem', cursor: 'pointer',
   },
   filterRow: {
-    display: 'flex', gap: '0.4rem', padding: '0.65rem 1.25rem',
+    display: 'flex', flexWrap: 'wrap', gap: '0.4rem', padding: '0.65rem 1.25rem',
     borderBottom: '1px solid #2b4231',
   },
   filterPill: (active) => ({
@@ -109,10 +109,14 @@ export default function MemoryInspector() {
   const [filter, setFilter] = useState('all');
   const [consolidating, setConsolidating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const load = () => {
     setLoading(true);
-    getFacts(false).then(f => { setFacts(f); setLoading(false); }).catch(() => setLoading(false));
+    setError(null);
+    getFacts(false)
+      .then(f => { setFacts(f); setLoading(false); })
+      .catch(e => { setError(e?.message || 'API unreachable'); setLoading(false); });
   };
 
   useEffect(() => { load(); }, []);
@@ -160,7 +164,13 @@ export default function MemoryInspector() {
 
         <div style={S.factList}>
           {loading && <p style={{ padding: '1rem 1.25rem', color: '#9ab09a', fontSize: '0.85rem' }}>Loading…</p>}
-          {!loading && filtered.length === 0 && (
+          {error && (
+            <p style={{ padding: '1rem 1.25rem', color: '#e05555', fontSize: '0.8rem', fontFamily: "'IBM Plex Mono', monospace" }}>
+              ✗ {error}<br />
+              <span style={{ color: '#9ab09a' }}>Is the backend running?</span>
+            </p>
+          )}
+          {!loading && !error && filtered.length === 0 && (
             <p style={{ padding: '1rem 1.25rem', color: '#9ab09a', fontSize: '0.85rem', fontStyle: 'italic' }}>
               No facts yet — chat a bit, then consolidate.
             </p>
