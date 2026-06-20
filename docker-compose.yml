@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     env_file: .env
     volumes:
-      - mnemos_data:/app/data
+      - ./data:/app/data
     ports:
       - "8000:8000"
     healthcheck:
@@ -26,6 +26,3 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  mnemos_data:
