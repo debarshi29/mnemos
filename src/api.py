@@ -75,6 +75,13 @@ def startup():
         _seed_demo()
 
 
+# ── Health ────────────────────────────────────────────────────────────────────
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 # ── Chat endpoint ──────────────────────────────────────────────────────────────
 
 @app.post("/chat", response_model=ChatResponse)
