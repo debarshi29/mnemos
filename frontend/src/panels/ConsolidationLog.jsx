@@ -7,7 +7,7 @@ const LABEL = {
 };
 
 const S = {
-  root: { display: 'flex', flexDirection: 'column', height: '100%', background: '#101a13', overflowY: 'auto' },
+  root: { display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, background: '#101a13', overflowY: 'auto' },
   header: {
     padding: '1.25rem 1.5rem 1rem', borderBottom: '1px solid #2b4231',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',

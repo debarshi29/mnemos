@@ -10,7 +10,7 @@ const STATUS_COLORS = { not_started: '#2b4231', in_progress: '#8aa83f', done: '#
 const STATUS_TEXT   = { not_started: '#9ab09a', in_progress: '#101a13', done: '#101a13' };
 
 const S = {
-  root: { display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', background: '#101a13' },
+  root: { display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto', background: '#101a13' },
   header: {
     padding: '1.25rem 1.5rem 1rem', borderBottom: '1px solid #2b4231',
     background: '#16241a', position: 'sticky', top: 0, zIndex: 1,

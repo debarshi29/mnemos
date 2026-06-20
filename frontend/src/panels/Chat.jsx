@@ -3,7 +3,7 @@ import { sendMessage, createRoadmap } from '../api';
 
 const S = {
   root: {
-    display: 'flex', flexDirection: 'column', height: '100%',
+    display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0,
     background: '#16241a',
   },
   header: {

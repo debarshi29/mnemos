@@ -12,11 +12,12 @@ const TYPE_COLORS = {
 };
 
 const S = {
-  root: { display: 'flex', height: '100%', background: '#101a13' },
+  root: { display: 'flex', flex: 1, minHeight: 0, background: '#101a13', overflow: 'hidden' },
 
   list: {
     width: 320, flexShrink: 0, borderRight: '1px solid #2b4231',
     display: 'flex', flexDirection: 'column', background: '#16241a',
+    minHeight: 0,
   },
   listHeader: {
     padding: '1.25rem 1.25rem 0.75rem',
@@ -75,11 +76,11 @@ const S = {
   },
 
   detail: {
-    flex: 1, overflowY: 'auto', padding: '1.5rem',
+    flex: 1, minHeight: 0, overflowY: 'auto', padding: '1.5rem',
     display: 'flex', flexDirection: 'column', gap: '1.25rem',
   },
   empty: {
-    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#9ab09a', fontStyle: 'italic', fontSize: '0.9rem',
   },
   detailTitle: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.15rem', lineHeight: 1.4 },
@@ -122,7 +123,10 @@ export default function MemoryInspector() {
     try {
       const data = await getFactWithProvenance(fact.fact_id);
       setProvenance(data);
-    } catch { setProvenance(null); }
+    } catch (err) {
+      console.error('provenance fetch failed:', err);
+      setProvenance({ fact: null, source_episodes: [] });
+    }
   };
 
   const consolidate = async () => {
@@ -163,10 +167,12 @@ export default function MemoryInspector() {
           )}
           {filtered.map(f => (
             <div key={f.fact_id} style={S.factItem(selected?.fact_id === f.fact_id, f.flagged)} onClick={() => select(f)}>
-              <div style={S.factContent}>{f.content}</div>
-              <div style={S.factMeta}>
+              <div style={{ ...S.factContent, pointerEvents: 'none' }}>{f.content}</div>
+              <div style={{ ...S.factMeta, pointerEvents: 'none' }}>
                 <span style={S.typeBadge(f.type)}>{f.type}</span>
-                <div style={S.confBar}><div style={S.confFill(f.confidence)} /></div>
+                <div style={S.confBar}>
+                  <div style={S.confFill(Number(f.confidence))} />
+                </div>
                 {f.flagged && <span style={S.flagBadge}>⚑ conflict</span>}
               </div>
             </div>
@@ -190,7 +196,7 @@ export default function MemoryInspector() {
 
           <div style={S.statRow}>
             <div style={S.stat}>
-              <span style={S.statVal}>{(selected.confidence * 100).toFixed(0)}%</span>
+              <span style={S.statVal}>{(Number(selected.confidence) * 100).toFixed(0)}%</span>
               <span style={S.statLabel}>confidence</span>
             </div>
             <div style={S.stat}>
