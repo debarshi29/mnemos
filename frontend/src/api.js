@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const http = axios.create({ baseURL: 'http://localhost:8000' });
+const http = axios.create({ baseURL: '' }); // Vite proxy forwards to :8000
 
 export const sendMessage = (message, sessionId) =>
   http.post('/chat', { message, session_id: sessionId }).then(r => r.data);
