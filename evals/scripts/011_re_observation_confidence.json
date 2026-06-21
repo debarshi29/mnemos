@@ -1,0 +1,29 @@
+{
+  "name": "011_re_observation_confidence",
+  "description": "A fact re-observed multiple times and stated most recently wins a contradiction.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I tried Emacs keybindings for a week and thought they were better than Vim.\nAssistant: Interesting take."},
+    {"session_id": "s2", "text": "User: Actually I prefer Vim keybindings.\nAssistant: Many power users agree."},
+    {"session_id": "s3", "text": "User: I use Vim keybindings everywhere — VS Code, Jupyter, even my browser.\nAssistant: Committed!"},
+    {"session_id": "s4", "text": "User: Seriously, Vim keybindings changed how I work. I can't go back.\nAssistant: They become second nature."}
+  ],
+  "planted_facts": [
+    "User prefers Vim keybindings"
+  ],
+  "absent_facts": [
+    "User prefers Emacs keybindings"
+  ],
+  "contradictions": [
+    {
+      "a": "User prefers Emacs keybindings",
+      "b": "User prefers Vim keybindings",
+      "expected_winner": "b"
+    }
+  ],
+  "provenance_checks": [
+    {
+      "fact_hint": "User prefers Vim",
+      "episode_hint": "Vim keybindings changed how I work"
+    }
+  ]
+}

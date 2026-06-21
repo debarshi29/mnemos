@@ -1,0 +1,25 @@
+{
+  "name": "016_professional_background",
+  "description": "Professional context facts across sessions — all must be recalled accurately.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I have a Masters in Computer Science from BITS Pilani.\nAssistant: Strong foundation."},
+    {"session_id": "s1", "text": "User: I've been working in the industry for 6 years now.\nAssistant: Good experience level."},
+    {"session_id": "s2", "text": "User: My current role is Principal Engineer at a Series B startup.\nAssistant: Exciting stage."},
+    {"session_id": "s2", "text": "User: Our team uses a microservices architecture on AWS with EKS.\nAssistant: Common setup for scale."},
+    {"session_id": "s3", "text": "User: I'm responsible for the reliability and performance of our payment service.\nAssistant: High-stakes work."}
+  ],
+  "planted_facts": [
+    "User has a Masters in Computer Science from BITS Pilani",
+    "User has 6 years of industry experience",
+    "User is a Principal Engineer at a Series B startup",
+    "User is responsible for a payment service"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User is a Principal Engineer",
+      "episode_hint": "Principal Engineer at a Series B startup"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "name": "012_multi_contradiction",
+  "description": "Multiple independent contradictions in the same script \u00e2\u20ac\u201d each winner must be resolved correctly.",
+  "episodes": [
+    {
+      "session_id": "s1",
+      "text": "User: My role is junior engineer.\nAssistant: Good starting point."
+    },
+    {
+      "session_id": "s1",
+      "text": "User: I work at a large enterprise company.\nAssistant: Noted."
+    },
+    {
+      "session_id": "s1",
+      "text": "User: I exercise three times a week.\nAssistant: Healthy habit."
+    },
+    {
+      "session_id": "s2",
+      "text": "User: I got promoted \u00e2\u20ac\u201d I'm now a senior engineer.\nAssistant: Congratulations!"
+    },
+    {
+      "session_id": "s2",
+      "text": "User: I left the enterprise and joined a startup.\nAssistant: Big change!"
+    },
+    {
+      "session_id": "s3",
+      "text": "User: I have been working out every day now since I got a home gym.\nAssistant: That is dedicated!"
+    }
+  ],
+  "planted_facts": [
+    "User is a senior engineer",
+    "User works at a startup",
+    "User works out every day"
+  ],
+  "absent_facts": [
+    "User is a junior engineer",
+    "User works at a large enterprise company"
+  ],
+  "contradictions": [
+    {
+      "a": "User is a junior engineer",
+      "b": "User is a senior engineer",
+      "expected_winner": "b"
+    },
+    {
+      "a": "User works at a large enterprise company",
+      "b": "User works at a startup",
+      "expected_winner": "b"
+    }
+  ],
+  "provenance_checks": [
+    {
+      "fact_hint": "User is a senior engineer",
+      "episode_hint": "promoted \u00e2\u20ac\u201d I'm now a senior engineer"
+    }
+  ]
+}

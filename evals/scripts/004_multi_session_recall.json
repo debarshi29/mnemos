@@ -1,0 +1,29 @@
+{
+  "name": "004_multi_session_recall",
+  "description": "Facts established early must survive across multiple sessions.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I'm a software engineer at a fintech startup.\nAssistant: Interesting field."},
+    {"session_id": "s1", "text": "User: I graduated with a CS degree from IIT in 2019.\nAssistant: Strong foundation."},
+    {"session_id": "s2", "text": "User: Today I'm working on a Kafka pipeline.\nAssistant: Kafka is great for streaming."},
+    {"session_id": "s3", "text": "User: I prefer working in the evenings, I'm a night owl.\nAssistant: Noted."},
+    {"session_id": "s4", "text": "User: What's a good resource for distributed systems?\nAssistant: DDIA is excellent."}
+  ],
+  "planted_facts": [
+    "User is a software engineer",
+    "User works at a fintech startup",
+    "User graduated from IIT in 2019",
+    "User prefers working in the evenings"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User is a software engineer at a fintech startup",
+      "episode_hint": "software engineer at a fintech startup"
+    },
+    {
+      "fact_hint": "User graduated from IIT",
+      "episode_hint": "graduated with a CS degree from IIT"
+    }
+  ]
+}

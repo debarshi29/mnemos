@@ -1,0 +1,24 @@
+{
+  "name": "014_negative_preferences",
+  "description": "Negative facts (dislikes, avoidances) must be consolidated just like positive ones.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I really dislike writing documentation.\nAssistant: Many engineers feel that way."},
+    {"session_id": "s1", "text": "User: I avoid using JavaScript on the backend at all costs.\nAssistant: Noted — backend JS can be controversial."},
+    {"session_id": "s2", "text": "User: I find meetings extremely draining and unproductive.\nAssistant: Deep work time is precious."},
+    {"session_id": "s2", "text": "User: I don't drink coffee — I'm caffeine sensitive.\nAssistant: Good to know."}
+  ],
+  "planted_facts": [
+    "User dislikes writing documentation",
+    "User avoids JavaScript on the backend",
+    "User finds meetings draining",
+    "User does not drink coffee"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User avoids backend JavaScript",
+      "episode_hint": "avoid using JavaScript on the backend"
+    }
+  ]
+}

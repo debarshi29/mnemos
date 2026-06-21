@@ -1,0 +1,24 @@
+{
+  "name": "019_learning_goal_completion",
+  "description": "User completes a series of learning goals — completion state must be in memory.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I'm starting to learn Kubernetes. I know Docker well but Kubernetes is new to me.\nAssistant: Good progression."},
+    {"session_id": "s2", "text": "User: I finished the Kubernetes fundamentals course. I can now deploy pods and services.\nAssistant: Great milestone!"},
+    {"session_id": "s3", "text": "User: I passed the Certified Kubernetes Administrator exam today!\nAssistant: Congratulations, that's a serious certification."},
+    {"session_id": "s4", "text": "User: Next goal: I want to learn Helm and GitOps with ArgoCD.\nAssistant: Natural next steps in the k8s ecosystem."}
+  ],
+  "planted_facts": [
+    "User is proficient in Docker",
+    "User completed a Kubernetes fundamentals course",
+    "User passed the Certified Kubernetes Administrator exam",
+    "User wants to learn Helm and ArgoCD"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User passed CKA exam",
+      "episode_hint": "Certified Kubernetes Administrator exam"
+    }
+  ]
+}

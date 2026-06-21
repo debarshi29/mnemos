@@ -1,0 +1,27 @@
+{
+  "name": "007_contradiction_tie_both_flagged",
+  "description": "Most recent contradicting claim wins — TypeScript stated in session 2 supersedes Python from session 1.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I think Python is the best language for everything.\nAssistant: It's certainly versatile."},
+    {"session_id": "s2", "text": "User: Actually I think TypeScript is the best language for everything.\nAssistant: TypeScript has strong tooling support."}
+  ],
+  "planted_facts": [
+    "User thinks TypeScript is the best programming language"
+  ],
+  "absent_facts": [
+    "User thinks Python is the best programming language"
+  ],
+  "contradictions": [
+    {
+      "a": "Python is the best programming language",
+      "b": "TypeScript is the best programming language",
+      "expected_winner": "b"
+    }
+  ],
+  "provenance_checks": [
+    {
+      "fact_hint": "User prefers TypeScript",
+      "episode_hint": "TypeScript is the best language"
+    }
+  ]
+}

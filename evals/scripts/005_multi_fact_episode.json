@@ -1,0 +1,26 @@
+{
+  "name": "005_multi_fact_episode",
+  "description": "A single rich episode should yield multiple distinct facts.",
+  "episodes": [
+    {
+      "session_id": "s1",
+      "text": "User: Here's my background: I'm a senior backend engineer with 8 years of experience. I work primarily in Go and have been using it for 5 years. I specialize in distributed systems and have built several high-throughput APIs. I'm based in Bangalore. I currently lead a team of 4 engineers.\nAssistant: That's a strong background. I've noted all of that."
+    }
+  ],
+  "planted_facts": [
+    "User is a senior backend engineer",
+    "User has 8 years of engineering experience",
+    "User works primarily in Go",
+    "User specializes in distributed systems",
+    "User is based in Bangalore",
+    "User leads a team of engineers"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User works primarily in Go",
+      "episode_hint": "work primarily in Go"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "015_progress_tracking",
+  "description": "Status updates across sessions \u00e2\u20ac\u201d latest progress state should win.",
+  "episodes": [
+    {
+      "session_id": "s1",
+      "text": "User: I just started reading DDIA. I am on chapter 1.\nAssistant: Great book, enjoy the journey."
+    },
+    {
+      "session_id": "s2",
+      "text": "User: I am still reading DDIA, I am about halfway through \u2014 currently on distributed transactions.\nAssistant: That chapter is key."
+    },
+    {
+      "session_id": "s3",
+      "text": "User: I am done with DDIA \u2014 I finished it last night. No longer reading it.\nAssistant: Congrats! Excellent reading choice."
+    }
+  ],
+  "planted_facts": [
+    "User has finished reading DDIA"
+  ],
+  "absent_facts": [
+    "User is currently reading DDIA and has not finished it"
+  ],
+  "contradictions": [
+    {
+      "a": "User is reading DDIA",
+      "b": "User has finished reading DDIA",
+      "expected_winner": "b"
+    }
+  ],
+  "provenance_checks": [
+    {
+      "fact_hint": "User finished DDIA",
+      "episode_hint": "finished it last night"
+    }
+  ]
+}

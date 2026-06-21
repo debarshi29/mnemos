@@ -1,0 +1,29 @@
+{
+  "name": "018_dense_consolidation",
+  "description": "Single dense session with 10+ facts \u00e2\u20ac\u201d consolidation must not silently lose any.",
+  "episodes": [
+    {
+      "session_id": "s1",
+      "text": "User: Let me give you my full context. I'm Riya, 28, working as a data scientist in Delhi. I've been in data science for 4 years. I use Python daily \u00e2\u20ac\u201d pandas, sklearn, PyTorch. I have a strong statistics background from my undergrad. I'm currently focused on NLP and LLMs. I read papers every morning before work. I prefer concise explanations with code examples. I'm preparing for ML interviews at top tech companies.\nAssistant: Got it \u00e2\u20ac\u201d I'll keep all of that in mind."
+    }
+  ],
+  "planted_facts": [
+    "User is a data scientist",
+    "User is based in Delhi",
+    "User has 4 years of data science experience",
+    "User uses Python daily for data science",
+    "User has a strong statistics background",
+    "User is focused on NLP and LLMs",
+    "User reads research papers regularly",
+    "User prefers explanations with code examples",
+    "User is preparing for ML interviews"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User is preparing for ML interviews",
+      "episode_hint": "preparing for ML interviews at top tech companies"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "010_mixed_fact_types",
+  "description": "Facts of different types (preference, skill, event, status) all correctly consolidated.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I prefer dark mode in all my tools.\nAssistant: Noted."},
+    {"session_id": "s1", "text": "User: I'm proficient in SQL and have been using it for 6 years.\nAssistant: Solid skill."},
+    {"session_id": "s2", "text": "User: I attended PyCon India last week.\nAssistant: How was it?"},
+    {"session_id": "s2", "text": "User: I'm currently in the middle of building a REST API for my side project.\nAssistant: What stack are you using?"},
+    {"session_id": "s3", "text": "User: I don't like pair programming, I focus better alone.\nAssistant: Solo flow works for many engineers."}
+  ],
+  "planted_facts": [
+    "User prefers dark mode",
+    "User is proficient in SQL",
+    "User attended PyCon India",
+    "User is building a REST API as a side project",
+    "User prefers working alone over pair programming"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User attended PyCon India",
+      "episode_hint": "attended PyCon India last week"
+    }
+  ]
+}

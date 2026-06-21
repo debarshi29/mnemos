@@ -1,0 +1,24 @@
+{
+  "name": "008_skill_accumulation",
+  "description": "User acquires new non-contradicting skills across sessions — all should be retained.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I just finished a course on machine learning fundamentals.\nAssistant: Great start!"},
+    {"session_id": "s2", "text": "User: I completed the deep learning specialisation on Coursera.\nAssistant: Excellent."},
+    {"session_id": "s3", "text": "User: I've been learning MLOps — Docker, Kubernetes, model serving.\nAssistant: Full-stack ML skills."},
+    {"session_id": "s4", "text": "User: I recently got my AWS Solutions Architect certification.\nAssistant: Very valuable certification."}
+  ],
+  "planted_facts": [
+    "User completed a machine learning course",
+    "User completed the deep learning specialisation",
+    "User is learning MLOps",
+    "User has AWS Solutions Architect certification"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User completed deep learning course",
+      "episode_hint": "deep learning specialisation on Coursera"
+    }
+  ]
+}

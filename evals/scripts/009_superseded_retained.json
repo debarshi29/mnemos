@@ -1,0 +1,28 @@
+{
+  "name": "009_superseded_retained",
+  "description": "The losing fact in a contradiction must be retained as superseded — not hard-deleted.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I live in Mumbai.\nAssistant: Great city."},
+    {"session_id": "s2", "text": "User: I just relocated to Pune for a new job.\nAssistant: Congratulations on the new role!"},
+    {"session_id": "s3", "text": "User: Pune is much quieter than Mumbai, I like it.\nAssistant: A lot of engineers prefer Pune."}
+  ],
+  "planted_facts": [
+    "User lives in Pune"
+  ],
+  "absent_facts": [
+    "User lives in Mumbai"
+  ],
+  "contradictions": [
+    {
+      "a": "User lives in Mumbai",
+      "b": "User lives in Pune",
+      "expected_winner": "b"
+    }
+  ],
+  "provenance_checks": [
+    {
+      "fact_hint": "User lives in Pune",
+      "episode_hint": "relocated to Pune for a new job"
+    }
+  ]
+}

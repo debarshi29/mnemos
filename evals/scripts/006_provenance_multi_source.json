@@ -1,0 +1,33 @@
+{
+  "name": "006_provenance_multi_source",
+  "description": "A fact reinforced across multiple sessions should trace back to multiple source episodes.",
+  "episodes": [
+    {
+      "session_id": "s1",
+      "text": "User: I use Neovim as my primary editor.\nAssistant: Good choice for a power user."
+    },
+    {
+      "session_id": "s2",
+      "text": "User: I've been customising my Neovim config this week.\nAssistant: Neovim configs can be a rabbit hole!"
+    },
+    {
+      "session_id": "s3",
+      "text": "User: My Neovim setup is finally stable \u00e2\u20ac\u201d LSP, Telescope, everything.\nAssistant: Sounds solid."
+    }
+  ],
+  "planted_facts": [
+    "User uses Neovim as their primary editor"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User uses Neovim as primary editor",
+      "episode_hint": "Neovim as my primary editor"
+    },
+    {
+      "fact_hint": "User is customising Neovim config",
+      "episode_hint": "customising my Neovim config"
+    }
+  ]
+}

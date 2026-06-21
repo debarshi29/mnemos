@@ -1,0 +1,29 @@
+{
+  "name": "020_contradiction_chain",
+  "description": "A fact is updated twice in chain — only the final value should be active.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: My target is to study for 30 minutes each day.\nAssistant: A reasonable start."},
+    {"session_id": "s2", "text": "User: I've increased my study target to 1 hour a day.\nAssistant: Good ambition."},
+    {"session_id": "s3", "text": "User: I'm now committing to 2 hours of study every day — I have a deadline.\nAssistant: Intensive but achievable."}
+  ],
+  "planted_facts": [
+    "User studies for 2 hours every day"
+  ],
+  "absent_facts": [
+    "User studies for 30 minutes each day",
+    "User studies for 1 hour a day"
+  ],
+  "contradictions": [
+    {
+      "a": "User studies for 30 minutes each day",
+      "b": "User studies for 2 hours every day",
+      "expected_winner": "b"
+    }
+  ],
+  "provenance_checks": [
+    {
+      "fact_hint": "User daily study time is 2 hours",
+      "episode_hint": "2 hours of study every day"
+    }
+  ]
+}

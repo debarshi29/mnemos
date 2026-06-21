@@ -1,0 +1,30 @@
+{
+  "name": "017_incremental_refinement",
+  "description": "Vague fact refined to specific over time \u00e2\u20ac\u201d refinement should update without contradiction noise.",
+  "episodes": [
+    {
+      "session_id": "s1",
+      "text": "User: I know some Rust.\nAssistant: It's a great language."
+    },
+    {
+      "session_id": "s2",
+      "text": "User: My Rust is at an intermediate level \u00e2\u20ac\u201d I'm comfortable with ownership and lifetimes.\nAssistant: That's past the hardest part."
+    },
+    {
+      "session_id": "s3",
+      "text": "User: I've written two production crates in Rust now and feel quite confident with async Rust.\nAssistant: That's real-world proficiency."
+    }
+  ],
+  "planted_facts": [
+    "User is proficient in Rust",
+    "User is comfortable with Rust ownership and lifetimes"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User has written production Rust crates",
+      "episode_hint": "production crates in Rust"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "013_no_false_contradiction",
+  "description": "Topically similar but semantically compatible facts must NOT be treated as contradictions.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I use Python for data science tasks.\nAssistant: Great for that use case."},
+    {"session_id": "s2", "text": "User: I also use Python for scripting and automation.\nAssistant: Python is very versatile."},
+    {"session_id": "s3", "text": "User: And I use Python for building backend APIs with FastAPI.\nAssistant: FastAPI is excellent."}
+  ],
+  "planted_facts": [
+    "User uses Python for data science",
+    "User uses Python for scripting and automation",
+    "User uses Python for backend APIs"
+  ],
+  "absent_facts": [],
+  "contradictions": [],
+  "provenance_checks": [
+    {
+      "fact_hint": "User uses Python for scripting",
+      "episode_hint": "scripting and automation"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "003_preference_update",
+  "description": "User updates a preference — new value should win, old value should be superseded.",
+  "episodes": [
+    {"session_id": "s1", "text": "User: I eat meat regularly and love barbecue.\nAssistant: Got it, I'll keep that in mind."},
+    {"session_id": "s2", "text": "User: I've switched to a fully vegan diet now — no meat, dairy, or eggs. I don't eat meat anymore.\nAssistant: Noted, updated your dietary preference to vegan."},
+    {"session_id": "s3", "text": "User: Also I try to avoid processed foods.\nAssistant: Good to know."}
+  ],
+  "planted_facts": [
+    "User follows a vegan diet",
+    "User avoids processed foods"
+  ],
+  "absent_facts": [
+    "User eats meat"
+  ],
+  "contradictions": [
+    {
+      "a": "User eats meat",
+      "b": "User follows a vegan diet",
+      "expected_winner": "b"
+    }
+  ],
+  "provenance_checks": [
+    {
+      "fact_hint": "User is vegan",
+      "episode_hint": "switched to a fully vegan diet"
+    }
+  ]
+}
