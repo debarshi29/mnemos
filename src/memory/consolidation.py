@@ -26,9 +26,15 @@ _EMA_W = get("memory.ema_new_weight", 0.7)
 _CONF_FLOOR = get("memory.confidence_floor", 0.1)
 
 _EXTRACT_SYSTEM = """You are a memory extractor for a learning copilot.
-Given one or more conversation turns, extract distinct atomic facts about the user.
-Facts can be preferences, skills, statuses, or events.
-Return a JSON array of objects: [{"content": "...", "type": "preference|status|event|skill|other"}]
+Given a conversation turn, extract distinct atomic facts about the user.
+
+Rules:
+- Each fact MUST be a complete sentence starting with "User", e.g. "User prefers Python as their main programming language."
+- Never return single words, fragments, or bare concepts.
+- Fact types: preference, status, event, skill, goal, other.
+- Only extract facts explicitly stated — do not infer or guess.
+
+Return a JSON array: [{"content": "User ...", "type": "preference|status|event|skill|goal|other"}]
 Return ONLY the JSON array, nothing else."""
 
 
@@ -59,6 +65,7 @@ def _extract(state: ConsolidationState) -> ConsolidationState:
             candidates = json.loads(raw)
             for c in candidates:
                 c["episode_ids"] = [ep.episode_id]
+                c["episode_timestamp"] = ep.timestamp.isoformat()
             extracted.extend(candidates)
         except Exception:
             pass  # malformed response — skip this episode
@@ -79,7 +86,9 @@ def _dedupe(state: ConsolidationState) -> ConsolidationState:
 
     for candidate in state["extracted"]:
         content = candidate.get("content", "").strip()
-        fact_type = candidate.get("type", "other")
+        _raw_type = candidate.get("type", "other")
+        _valid = {"preference", "status", "event", "skill", "goal", "other"}
+        fact_type = _raw_type if _raw_type in _valid else "other"
         ep_ids: list[str] = candidate.get("episode_ids", [])
         if not content:
             continue
@@ -107,8 +116,9 @@ def _dedupe(state: ConsolidationState) -> ConsolidationState:
                 sqlite_store.save_fact_provenance(FactProvenance(fact_id=match.fact_id, episode_id=eid))
             log["facts_updated"] = log.get("facts_updated", 0) + 1
         else:
-            new_fact = Fact(content=content, type=fact_type, confidence=1.0,
-                            last_seen=datetime.now(timezone.utc))
+            ep_ts_raw = candidate.get("episode_timestamp")
+            ep_ts = datetime.fromisoformat(ep_ts_raw) if ep_ts_raw else datetime.now(timezone.utc)
+            new_fact = Fact(content=content, type=fact_type, confidence=1.0, last_seen=ep_ts)
             new_facts.append(new_fact)
             for eid in ep_ids:
                 new_fact._episode_ids = getattr(new_fact, "_episode_ids", []) + [eid]
@@ -120,12 +130,18 @@ def _dedupe(state: ConsolidationState) -> ConsolidationState:
 
 
 def _contradiction_check(state: ConsolidationState) -> ConsolidationState:
-    """Run contradiction detection + resolution for each new fact."""
+    """Run contradiction detection + resolution for each new fact.
+
+    existing_facts is updated after each iteration so that two new facts
+    extracted from the same consolidation run can contradict each other —
+    e.g. s1 says Python, s2 says Rust → Rust wins.
+    """
     existing_facts = sqlite_store.get_facts(include_superseded=False)
     log = state["log"]
     resolved_count = 0
 
     for new_fact in state["new_facts"]:
+        ep_ids = getattr(new_fact, "_episode_ids", [])
         conflicts = contra.find_contradictions(new_fact, existing_facts)
         if conflicts:
             for conflicting in conflicts:
@@ -138,14 +154,30 @@ def _contradiction_check(state: ConsolidationState) -> ConsolidationState:
                     "winner_content": winner.content,
                     "loser_content": loser.content,
                 })
+                # Link the new episode to the winner so provenance is correct
+                for eid in ep_ids:
+                    try:
+                        sqlite_store.save_fact_provenance(
+                            FactProvenance(fact_id=winner.fact_id, episode_id=eid)
+                        )
+                    except Exception:
+                        pass  # duplicate provenance link — skip
+                # If new_fact won, it was saved by resolve() but not yet in vector store
+                if winner.fact_id == new_fact.fact_id:
+                    vec = embeddings.embed(winner.content)
+                    vector_store.upsert_fact(winner.fact_id, vec, {"content": winner.content, "type": winner.type})
+                # Update local view: remove loser, add winner if it's new
+                existing_facts = [f for f in existing_facts if f.fact_id != loser.fact_id]
+                if not any(f.fact_id == winner.fact_id for f in existing_facts):
+                    existing_facts.append(winner)
         else:
-            # persist new fact and index in vector store
+            # no conflict — persist new fact and index in vector store
             sqlite_store.save_fact(new_fact)
-            ep_ids = getattr(new_fact, "_episode_ids", [])
             for eid in ep_ids:
                 sqlite_store.save_fact_provenance(FactProvenance(fact_id=new_fact.fact_id, episode_id=eid))
             vec = embeddings.embed(new_fact.content)
             vector_store.upsert_fact(new_fact.fact_id, vec, {"content": new_fact.content, "type": new_fact.type})
+            existing_facts.append(new_fact)  # visible to subsequent iterations
 
     log["contradictions_resolved"] = resolved_count
     state["log"] = log
