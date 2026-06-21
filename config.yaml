@@ -23,7 +23,7 @@ memory:
   ema_new_weight: 0.7               # EMA: new_confidence = w*new + (1-w)*prior  [OWNER CALL]
   decay_half_life_days: 30          # retrieval score decay half-life              [OWNER CALL]
   confidence_floor: 0.1             # facts below this are pruned (marked, not deleted)
-  similarity_threshold: 0.85        # cosine similarity to flag potential contradictions
+  similarity_threshold: 0.60        # cosine similarity pre-filter before LLM contradiction judge
 
 consolidation:
   trigger: manual                   # manual | end_of_session | both              [OWNER CALL]
