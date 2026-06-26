@@ -19,12 +19,20 @@ _SIM_THRESHOLD: float = get("memory.similarity_threshold", 0.85)
 _JUDGE_SYSTEM = """You are a contradiction detector for a memory system.
 Given two statements about the same person, decide if they directly contradict each other.
 
-A contradiction occurs when both statements CANNOT be simultaneously true about a person's current state. This includes:
-- Logical contradictions: "User is a junior engineer" vs "User is a senior engineer"
-- Preference contradictions: "User prefers Python" vs "User prefers Rust"
-- Temporal/status contradictions: "User is reading book X" vs "User has finished reading book X" (you cannot currently be reading something you have already finished)
-- Location contradictions: "User lives in Mumbai" vs "User lives in Pune"
-- Factual updates: "User studies 30 minutes daily" vs "User studies 2 hours daily"
+A contradiction means knowing one statement is true forces the other to be FALSE.
+
+CONTRADICT examples (mutually exclusive — only one can be true):
+- "User is a junior engineer" vs "User is a senior engineer"
+- "User prefers Python as their favourite language" vs "User prefers Rust as their favourite language"
+- "User lives in Mumbai" vs "User lives in Pune"
+- "User studies 30 minutes daily" vs "User studies 2 hours daily"
+- "User is currently reading DDIA" vs "User has already finished reading DDIA"
+
+CONSISTENT examples (both can be true at the same time — do NOT mark as contradiction):
+- "User is vegan" vs "User does not eat meat" (vegan implies no meat — compatible)
+- "User switched to a vegan diet" vs "User no longer eats meat" (same lifestyle, different phrasing)
+- "User is a senior engineer" vs "User works at a startup" (role and employer are independent)
+- "User knows Python" vs "User knows JavaScript" (multiple skills are compatible)
 
 Reply with exactly one word: CONTRADICT or CONSISTENT."""
 

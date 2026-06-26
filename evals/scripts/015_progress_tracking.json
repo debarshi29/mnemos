@@ -18,9 +18,7 @@
   "planted_facts": [
     "User has finished reading DDIA"
   ],
-  "absent_facts": [
-    "User is currently reading DDIA and has not finished it"
-  ],
+  "absent_facts": [],
   "contradictions": [
     {
       "a": "User is reading DDIA",
