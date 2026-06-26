@@ -4,93 +4,93 @@ import { getFacts, getFactWithProvenance, triggerConsolidate, ingestSource } fro
 const MONO = { fontFamily: "'IBM Plex Mono', monospace" };
 
 const TYPE_PALETTE = {
-  preference: { text: '#f0c060', bg: 'rgba(240,192,96,0.10)', border: 'rgba(240,192,96,0.25)' },
-  skill:      { text: '#6ec6f0', bg: 'rgba(110,198,240,0.10)', border: 'rgba(110,198,240,0.25)' },
-  status:     { text: '#c5e063', bg: 'rgba(197,224,99,0.10)',  border: 'rgba(197,224,99,0.25)'  },
+  preference: { text: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.25)' },
+  skill:      { text: '#38bdf8', bg: 'rgba(56,189,248,0.10)',  border: 'rgba(56,189,248,0.25)'  },
+  status:     { text: '#34d399', bg: 'rgba(52,211,153,0.10)',  border: 'rgba(52,211,153,0.25)'  },
   event:      { text: '#a78bfa', bg: 'rgba(167,139,250,0.10)', border: 'rgba(167,139,250,0.25)' },
-  goal:       { text: '#f4a261', bg: 'rgba(244,162,97,0.10)',  border: 'rgba(244,162,97,0.25)'  },
-  other:      { text: '#9ab09a', bg: 'rgba(154,176,154,0.10)', border: 'rgba(154,176,154,0.25)' },
+  goal:       { text: '#fb923c', bg: 'rgba(251,146,60,0.10)',  border: 'rgba(251,146,60,0.25)'  },
+  other:      { text: '#64748b', bg: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.25)' },
 };
 
 function typePalette(type) { return TYPE_PALETTE[type] || TYPE_PALETTE.other; }
 
 const S = {
-  root: { display: 'flex', flex: 1, minHeight: 0, background: '#101a13', overflow: 'hidden' },
+  root: { display: 'flex', flex: 1, minHeight: 0, background: '#0f1117', overflow: 'hidden' },
 
   sidebar: {
-    width: 340, flexShrink: 0, borderRight: '1px solid #1f3326',
-    display: 'flex', flexDirection: 'column', background: '#13201a',
+    width: 340, flexShrink: 0, borderRight: '1px solid #1e2435',
+    display: 'flex', flexDirection: 'column', background: '#111520',
     minHeight: 0, overflow: 'hidden',
   },
   sidebarHead: {
     padding: '1rem 1.25rem 0.85rem',
-    borderBottom: '1px solid #1f3326',
+    borderBottom: '1px solid #1e2435',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     flexShrink: 0,
   },
   headLeft: { display: 'flex', flexDirection: 'column', gap: '0.1rem' },
-  sidebarTitle: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#e9efe4' },
-  factCount: { ...MONO, fontSize: '0.58rem', color: '#4a6b50', letterSpacing: '0.1em', textTransform: 'uppercase' },
+  sidebarTitle: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1rem', color: '#e2e8f0' },
+  factCount: { ...MONO, fontSize: '0.58rem', color: '#2d3748', letterSpacing: '0.1em', textTransform: 'uppercase' },
   consolidateBtn: (busy) => ({
     ...MONO, fontSize: '0.6rem',
     textTransform: 'uppercase', letterSpacing: '0.12em',
-    background: busy ? 'transparent' : 'rgba(197,224,99,0.1)',
-    border: `1px solid ${busy ? '#2b4231' : 'rgba(197,224,99,0.3)'}`,
-    color: busy ? '#4a6b50' : '#c5e063',
+    background: busy ? 'transparent' : 'rgba(245,158,11,0.1)',
+    border: `1px solid ${busy ? '#252d3d' : 'rgba(245,158,11,0.3)'}`,
+    color: busy ? '#2d3748' : '#f59e0b',
     borderRadius: 99, padding: '0.28rem 0.75rem', cursor: busy ? 'default' : 'pointer',
     transition: 'all 0.12s',
   }),
 
   filterRow: {
     display: 'flex', flexWrap: 'wrap', gap: '0.35rem', padding: '0.65rem 1.25rem 0.6rem',
-    borderBottom: '1px solid #1f3326', flexShrink: 0,
+    borderBottom: '1px solid #1e2435', flexShrink: 0,
   },
   filterPill: (active) => ({
     ...MONO, fontSize: '0.58rem',
     textTransform: 'uppercase', letterSpacing: '0.1em',
     padding: '0.18rem 0.55rem', borderRadius: 99, cursor: 'pointer',
-    background: active ? '#c5e063' : 'transparent',
-    color: active ? '#101a13' : '#6b8870',
-    border: `1px solid ${active ? '#c5e063' : '#2b4231'}`,
+    background: active ? '#f59e0b' : 'transparent',
+    color: active ? '#0f1117' : '#374151',
+    border: `1px solid ${active ? '#f59e0b' : '#252d3d'}`,
     transition: 'all 0.12s',
   }),
 
   ingestBar: {
-    borderBottom: '1px solid #1f3326', padding: '0.6rem 1.25rem',
+    borderBottom: '1px solid #1e2435', padding: '0.6rem 1.25rem',
     display: 'flex', flexDirection: 'column', gap: '0.4rem',
-    background: '#101a13', flexShrink: 0,
+    background: '#0f1117', flexShrink: 0,
   },
   ingestRow: { display: 'flex', gap: '0.4rem', alignItems: 'center' },
   ingestKind: {
-    ...MONO, fontSize: '0.6rem', background: '#16241a',
-    border: '1px solid #2b4231', borderRadius: 6, padding: '0.32rem 0.5rem',
-    color: '#9ab09a', cursor: 'pointer', outline: 'none',
+    ...MONO, fontSize: '0.6rem', background: '#181c2a',
+    border: '1px solid #252d3d', borderRadius: 6, padding: '0.32rem 0.5rem',
+    color: '#64748b', cursor: 'pointer', outline: 'none',
   },
   ingestInput: {
     flex: 1, ...MONO, fontSize: '0.68rem',
-    background: '#16241a', border: '1px solid #2b4231', borderRadius: 6,
-    padding: '0.32rem 0.65rem', color: '#e9efe4', outline: 'none',
+    background: '#181c2a', border: '1px solid #252d3d', borderRadius: 6,
+    padding: '0.32rem 0.65rem', color: '#e2e8f0', outline: 'none',
     transition: 'border-color 0.12s',
   },
   ingestBtn: (busy) => ({
     ...MONO, fontSize: '0.6rem',
     textTransform: 'uppercase', letterSpacing: '0.1em',
     padding: '0.32rem 0.75rem', borderRadius: 6, cursor: busy ? 'default' : 'pointer',
-    background: busy ? 'transparent' : 'rgba(197,224,99,0.1)',
-    border: `1px solid ${busy ? '#2b4231' : 'rgba(197,224,99,0.3)'}`,
-    color: busy ? '#4a6b50' : '#c5e063', transition: 'all 0.12s',
+    background: busy ? 'transparent' : 'rgba(245,158,11,0.1)',
+    border: `1px solid ${busy ? '#252d3d' : 'rgba(245,158,11,0.3)'}`,
+    color: busy ? '#2d3748' : '#f59e0b', transition: 'all 0.12s',
   }),
   ingestMsg: { ...MONO, fontSize: '0.62rem' },
 
   factList: { flex: 1, overflowY: 'auto', padding: '0.4rem 0' },
   factItem: (selected, flagged) => ({
     padding: '0.7rem 1.25rem', cursor: 'pointer',
-    borderLeft: `3px solid ${selected ? '#c5e063' : 'transparent'}`,
-    background: selected ? 'rgba(197,224,99,0.05)' : 'transparent',
+    borderLeft: `3px solid ${selected ? '#f59e0b' : 'transparent'}`,
+    background: selected ? 'rgba(245,158,11,0.05)' : 'transparent',
     opacity: flagged ? 0.7 : 1,
     transition: 'background 0.1s, border-color 0.1s',
   }),
-  factContent: { fontSize: '0.875rem', lineHeight: 1.45, color: '#e9efe4', marginBottom: '0.35rem' },
+  factContent: { fontSize: '0.875rem', lineHeight: 1.45, color: '#e2e8f0', marginBottom: '0.35rem' },
   factMeta: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
   typeBadge: (type) => {
     const p = typePalette(type);
@@ -100,17 +100,17 @@ const S = {
       borderRadius: 99, padding: '0.1rem 0.45rem',
     };
   },
-  confBar: { flex: 1, height: 5, background: '#1a2f20', borderRadius: 99, overflow: 'hidden' },
+  confBar: { flex: 1, height: 5, background: '#1e2435', borderRadius: 99, overflow: 'hidden' },
   confFill: (conf) => ({
     height: '100%', borderRadius: 99,
     width: `${Math.round(conf * 100)}%`,
-    background: conf > 0.7 ? '#c5e063' : conf > 0.4 ? '#8aa83f' : '#4a6b50',
+    background: conf > 0.7 ? '#f59e0b' : conf > 0.4 ? '#b45309' : '#374151',
     transition: 'width 0.3s ease',
   }),
-  confPct: { ...MONO, fontSize: '0.54rem', color: '#4a6b50', minWidth: 28, textAlign: 'right' },
+  confPct: { ...MONO, fontSize: '0.54rem', color: '#2d3748', minWidth: 28, textAlign: 'right' },
   flagBadge: {
-    ...MONO, fontSize: '0.52rem', color: '#f0c060',
-    background: 'rgba(240,192,96,0.1)', border: '1px solid rgba(240,192,96,0.25)',
+    ...MONO, fontSize: '0.52rem', color: '#f59e0b',
+    background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)',
     borderRadius: 99, padding: '0.1rem 0.4rem',
   },
 
@@ -120,32 +120,32 @@ const S = {
   },
   empty: {
     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    color: '#4a6b50', fontSize: '0.85rem', fontStyle: 'italic',
+    color: '#2d3748', fontSize: '0.85rem', fontStyle: 'italic',
   },
   detailTitle: {
     fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.2rem',
-    lineHeight: 1.4, color: '#e9efe4',
+    lineHeight: 1.4, color: '#e2e8f0',
   },
   conflictNote: {
     marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem',
-    fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.65rem', color: '#f0c060',
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.65rem', color: '#f59e0b',
   },
   statsRow: { display: 'flex', gap: '1.75rem', flexWrap: 'wrap' },
   stat: { display: 'flex', flexDirection: 'column', gap: '0.15rem' },
-  statVal: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.15rem', color: '#c5e063' },
-  statLabel: { ...MONO, fontSize: '0.56rem', color: '#4a6b50', textTransform: 'uppercase', letterSpacing: '0.1em' },
+  statVal: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.15rem', color: '#f59e0b' },
+  statLabel: { ...MONO, fontSize: '0.56rem', color: '#2d3748', textTransform: 'uppercase', letterSpacing: '0.1em' },
   section: { display: 'flex', flexDirection: 'column', gap: '0.6rem' },
-  sectionLabel: { ...MONO, fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#4a6b50' },
+  sectionLabel: { ...MONO, fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#2d3748' },
   episodeCard: {
-    background: '#16241a', border: '1px solid #1f3326', borderRadius: 10,
+    background: '#181c2a', border: '1px solid #1e2435', borderRadius: 10,
     padding: '0.85rem 1rem',
   },
   episodeMeta: {
-    ...MONO, fontSize: '0.58rem', color: '#4a6b50', letterSpacing: '0.06em',
+    ...MONO, fontSize: '0.58rem', color: '#2d3748', letterSpacing: '0.06em',
     marginBottom: '0.5rem', display: 'block',
   },
-  episodeText: { fontSize: '0.85rem', lineHeight: 1.6, color: '#d0d8cc' },
-  factId: { ...MONO, fontSize: '0.65rem', color: '#3d5a44', wordBreak: 'break-all' },
+  episodeText: { fontSize: '0.85rem', lineHeight: 1.6, color: '#94a3b8' },
+  factId: { ...MONO, fontSize: '0.65rem', color: '#1e2d40', wordBreak: 'break-all' },
 };
 
 const FILTERS = ['all', 'preference', 'skill', 'status', 'event', 'goal', 'flagged'];
@@ -209,7 +209,6 @@ export default function MemoryInspector() {
 
   return (
     <div style={S.root}>
-      {/* Sidebar */}
       <div style={S.sidebar}>
         <div style={S.sidebarHead}>
           <div style={S.headLeft}>
@@ -239,30 +238,30 @@ export default function MemoryInspector() {
               value={ingestSrc}
               onChange={e => setIngestSrc(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && ingest()}
-              onFocus={e => e.target.style.borderColor = '#3d6b47'}
-              onBlur={e => e.target.style.borderColor = '#2b4231'}
+              onFocus={e => e.target.style.borderColor = '#374151'}
+              onBlur={e => e.target.style.borderColor = '#252d3d'}
             />
             <button style={S.ingestBtn(ingesting)} onClick={ingest} disabled={ingesting}>
               {ingesting ? '…' : '↑'}
             </button>
           </div>
           {ingestMsg && (
-            <span style={{ ...S.ingestMsg, color: ingestMsg.ok ? '#8aa83f' : '#e05555' }}>
+            <span style={{ ...S.ingestMsg, color: ingestMsg.ok ? '#34d399' : '#f87171' }}>
               {ingestMsg.text}
             </span>
           )}
         </div>
 
         <div style={S.factList}>
-          {loading && <p style={{ padding: '1rem 1.25rem', color: '#4a6b50', fontSize: '0.85rem' }}>Loading…</p>}
+          {loading && <p style={{ padding: '1rem 1.25rem', color: '#2d3748', fontSize: '0.85rem' }}>Loading…</p>}
           {error && (
-            <p style={{ padding: '1rem 1.25rem', color: '#e05555', fontSize: '0.78rem', ...MONO }}>
+            <p style={{ padding: '1rem 1.25rem', color: '#f87171', fontSize: '0.78rem', ...MONO }}>
               ✗ {error}<br />
-              <span style={{ color: '#4a6b50' }}>Is the backend running?</span>
+              <span style={{ color: '#2d3748' }}>Is the backend running?</span>
             </p>
           )}
           {!loading && !error && filtered.length === 0 && (
-            <p style={{ padding: '1.25rem', color: '#4a6b50', fontSize: '0.85rem', fontStyle: 'italic' }}>
+            <p style={{ padding: '1.25rem', color: '#2d3748', fontSize: '0.85rem', fontStyle: 'italic' }}>
               No facts yet — chat a bit, then consolidate.
             </p>
           )}
@@ -288,7 +287,6 @@ export default function MemoryInspector() {
         </div>
       </div>
 
-      {/* Detail pane */}
       {!selected ? (
         <div style={S.empty}>← select a fact to inspect its provenance</div>
       ) : (
@@ -316,9 +314,9 @@ export default function MemoryInspector() {
 
           <div style={S.section}>
             <span style={S.sectionLabel}>Provenance — source episodes</span>
-            {!provenance && <p style={{ color: '#4a6b50', fontSize: '0.85rem', fontStyle: 'italic' }}>Loading…</p>}
+            {!provenance && <p style={{ color: '#2d3748', fontSize: '0.85rem', fontStyle: 'italic' }}>Loading…</p>}
             {provenance?.source_episodes?.length === 0 && (
-              <p style={{ color: '#4a6b50', fontSize: '0.85rem', fontStyle: 'italic' }}>No source episodes recorded.</p>
+              <p style={{ color: '#2d3748', fontSize: '0.85rem', fontStyle: 'italic' }}>No source episodes recorded.</p>
             )}
             {provenance?.source_episodes?.map(ep => (
               <div key={ep.episode_id} style={S.episodeCard}>

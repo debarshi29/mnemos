@@ -4,70 +4,70 @@ import { getConsolidationLog, triggerConsolidate } from '../api';
 const MONO = { fontFamily: "'IBM Plex Mono', monospace" };
 
 const DETAIL_COLOR = {
-  contradiction_resolved: '#f0c060',
-  pruned: '#6b8870',
-  default: '#8aa83f',
+  contradiction_resolved: '#f59e0b',
+  pruned: '#374151',
+  default: '#34d399',
 };
 
 const S = {
   root: {
     display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0,
-    background: '#101a13', overflowY: 'auto',
+    background: '#0f1117', overflowY: 'auto',
   },
   header: {
-    padding: '1.25rem 2rem 1rem', borderBottom: '1px solid #1f3326',
+    padding: '1.25rem 2rem 1rem', borderBottom: '1px solid #1e2435',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    background: '#13201a', position: 'sticky', top: 0, zIndex: 1,
+    background: '#111520', position: 'sticky', top: 0, zIndex: 1,
   },
-  title: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.05rem', color: '#e9efe4' },
+  title: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.05rem', color: '#e2e8f0' },
   runBtn: (running) => ({
     ...MONO, fontSize: '0.6rem',
     textTransform: 'uppercase', letterSpacing: '0.12em',
-    background: running ? 'transparent' : '#c5e063',
-    color: running ? '#4a6b50' : '#101a13',
-    border: running ? '1px solid #2b4231' : 'none',
+    background: running ? 'transparent' : '#f59e0b',
+    color: running ? '#2d3748' : '#0f1117',
+    border: running ? '1px solid #252d3d' : 'none',
     borderRadius: 99, padding: '0.3rem 0.85rem', cursor: running ? 'default' : 'pointer',
     transition: 'all 0.13s',
   }),
   list: { padding: '1.25rem 2rem', display: 'flex', flexDirection: 'column', gap: '1rem' },
   card: {
-    background: '#13201a', border: '1px solid #1f3326', borderRadius: 14,
+    background: '#111520', border: '1px solid #1e2435', borderRadius: 14,
     overflow: 'hidden', transition: 'border-color 0.15s',
   },
   cardHead: {
     padding: '0.85rem 1.25rem',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   },
-  runId: { ...MONO, fontSize: '0.62rem', color: '#4a6b50' },
-  ts: { ...MONO, fontSize: '0.6rem', color: '#3d5a44' },
+  runId: { ...MONO, fontSize: '0.62rem', color: '#2d3748' },
+  ts: { ...MONO, fontSize: '0.6rem', color: '#252d3d' },
   statsRow: {
-    display: 'flex', gap: '0', borderTop: '1px solid #1f3326',
-    borderBottom: '1px solid #1f3326',
+    display: 'flex', gap: '0', borderTop: '1px solid #1e2435',
+    borderBottom: '1px solid #1e2435',
   },
   statCell: (last) => ({
     flex: 1, padding: '0.8rem 0.5rem', textAlign: 'center',
-    borderRight: last ? 'none' : '1px solid #1f3326',
+    borderRight: last ? 'none' : '1px solid #1e2435',
     display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'center',
   }),
-  statVal: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.3rem', color: '#c5e063' },
-  statLabel: { ...MONO, fontSize: '0.52rem', color: '#3d5a44', textTransform: 'uppercase', letterSpacing: '0.1em' },
+  statVal: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.3rem', color: '#f59e0b' },
+  statLabel: { ...MONO, fontSize: '0.52rem', color: '#2d3748', textTransform: 'uppercase', letterSpacing: '0.1em' },
   vineWrap: { padding: '0 1.25rem' },
   vine: (pct) => ({
-    height: 2, background: 'linear-gradient(90deg, #2b4231, #c5e063)',
-    borderRadius: 99, width: `${pct}%`, margin: '0.65rem 0',
-    transition: 'width 0.4s ease',
+    height: 2, background: `linear-gradient(90deg, #1e2435 ${100 - pct}%, #f59e0b 100%)`,
+    borderRadius: 99, margin: '0.65rem 0',
+    transition: 'all 0.4s ease',
   }),
   toggleBtn: (open) => ({
     ...MONO, fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.1em',
     padding: '0.5rem 1.25rem 0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
-    cursor: 'pointer', color: open ? '#8aa83f' : '#4a6b50',
+    cursor: 'pointer', color: open ? '#b45309' : '#2d3748',
     background: 'none', border: 'none', width: '100%', textAlign: 'left',
     transition: 'color 0.12s',
   }),
   details: { padding: '0 1.25rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' },
   detailItem: (type) => ({
-    background: '#101a13', borderRadius: 8, padding: '0.55rem 0.85rem',
-    fontSize: '0.8rem', lineHeight: 1.5, color: '#c8d4c4',
+    background: '#0f1117', borderRadius: 8, padding: '0.55rem 0.85rem',
+    fontSize: '0.8rem', lineHeight: 1.5, color: '#64748b',
     borderLeft: `3px solid ${DETAIL_COLOR[type] || DETAIL_COLOR.default}`,
     display: 'flex', flexDirection: 'column', gap: '0.2rem',
   }),
@@ -79,17 +79,17 @@ const S = {
   empty: {
     flex: 1, display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center',
-    color: '#4a6b50', padding: '3rem', textAlign: 'center', gap: '0.5rem',
+    color: '#2d3748', padding: '3rem', textAlign: 'center', gap: '0.5rem',
   },
   emptyHint: { ...MONO, fontSize: '0.65rem', lineHeight: 1.7 },
 };
 
 const STATS = [
-  { key: 'episodes_processed', label: 'episodes' },
-  { key: 'facts_created',      label: 'created'  },
-  { key: 'facts_updated',      label: 'updated'  },
+  { key: 'episodes_processed',     label: 'episodes' },
+  { key: 'facts_created',          label: 'created'  },
+  { key: 'facts_updated',          label: 'updated'  },
   { key: 'contradictions_resolved', label: 'resolved' },
-  { key: 'facts_pruned',       label: 'pruned'   },
+  { key: 'facts_pruned',           label: 'pruned'   },
 ];
 
 function fmtTs(ts) {
@@ -129,11 +129,11 @@ export default function ConsolidationLog() {
         </button>
       </div>
 
-      {loading && <p style={{ padding: '1.5rem 2rem', color: '#4a6b50', fontStyle: 'italic', fontSize: '0.85rem' }}>Loading…</p>}
+      {loading && <p style={{ padding: '1.5rem 2rem', color: '#2d3748', fontStyle: 'italic', fontSize: '0.85rem' }}>Loading…</p>}
 
       {!loading && entries.length === 0 && (
         <div style={S.empty}>
-          <span style={{ fontSize: '1.4rem', opacity: 0.4 }}>◉</span>
+          <span style={{ fontSize: '1.4rem', opacity: 0.3 }}>◉</span>
           <span style={S.emptyHint}>
             No consolidation runs yet.<br />
             Hit "run now" to start the sleep cycle.
@@ -150,8 +150,8 @@ export default function ConsolidationLog() {
             <div
               key={e.run_id}
               style={S.card}
-              onMouseEnter={el => el.currentTarget.style.borderColor = '#2b4231'}
-              onMouseLeave={el => el.currentTarget.style.borderColor = '#1f3326'}
+              onMouseEnter={el => el.currentTarget.style.borderColor = '#252d3d'}
+              onMouseLeave={el => el.currentTarget.style.borderColor = '#1e2435'}
             >
               <div style={S.cardHead}>
                 <span style={S.runId}>run · {e.run_id.slice(0, 8)}</span>

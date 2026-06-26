@@ -2,12 +2,12 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-::selection { background: #c5e063; color: #101a13; }
+::selection { background: #f59e0b; color: #0f1117; }
 
 html, body, #root {
   height: 100%;
-  background: #101a13;
-  color: #e9efe4;
+  background: #0f1117;
+  color: #e2e8f0;
   font-family: 'Fraunces', serif;
   font-size: 16px;
   line-height: 1.6;
@@ -16,8 +16,8 @@ html, body, #root {
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2b4231; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #4a6b50; }
+::-webkit-scrollbar-thumb { background: #252d3d; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #374151; }
 
 button {
   cursor: pointer; border: none; background: none;
@@ -28,11 +28,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 button:active:not(:disabled) { transform: scale(0.97); }
 
 input, textarea {
-  font-family: 'Fraunces', serif; color: #e9efe4;
+  font-family: 'Fraunces', serif; color: #e2e8f0;
   background: transparent; border: none; outline: none;
 }
 
-a { color: #c5e063; text-decoration: none; }
+a { color: #f59e0b; text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 /* Typing dots */
@@ -53,7 +53,7 @@ a:hover { text-decoration: underline; }
 
 /* Focus ring */
 *:focus-visible {
-  outline: 2px solid rgba(197,224,99,0.4);
+  outline: 2px solid rgba(245,158,11,0.4);
   outline-offset: 2px;
   border-radius: 4px;
 }

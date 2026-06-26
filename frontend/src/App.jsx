@@ -17,18 +17,18 @@ const SESSION_ID = crypto.randomUUID();
 const S = {
   root: {
     display: 'flex', flexDirection: 'column', height: '100vh',
-    background: '#101a13', overflow: 'hidden',
+    background: '#0f1117', overflow: 'hidden',
   },
   nav: {
     display: 'flex', alignItems: 'center', gap: '0.3rem',
     padding: '0.75rem 1.5rem',
-    borderBottom: '1px solid #1f3326',
-    background: '#13201a',
+    borderBottom: '1px solid #1e2435',
+    background: '#111520',
     flexShrink: 0,
   },
   wordmark: {
     fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: '1.05rem',
-    color: '#c5e063', marginRight: '1.5rem', letterSpacing: '-0.02em',
+    color: '#f59e0b', marginRight: '1.5rem', letterSpacing: '-0.02em',
     userSelect: 'none',
   },
   tab: (active) => ({
@@ -36,9 +36,9 @@ const S = {
     fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.68rem',
     textTransform: 'uppercase', letterSpacing: '0.12em',
     padding: '0.38rem 0.9rem', borderRadius: 99, cursor: 'pointer',
-    background: active ? '#c5e063' : 'transparent',
-    color: active ? '#101a13' : '#6b8870',
-    border: `1px solid ${active ? '#c5e063' : 'transparent'}`,
+    background: active ? '#f59e0b' : 'transparent',
+    color: active ? '#0f1117' : '#475569',
+    border: `1px solid ${active ? '#f59e0b' : 'transparent'}`,
     transition: 'all 0.13s',
     fontWeight: active ? 500 : 400,
   }),
@@ -57,8 +57,8 @@ export default function App() {
             key={t.id}
             style={S.tab(tab === t.id)}
             onClick={() => setTab(t.id)}
-            onMouseEnter={e => { if (tab !== t.id) { e.currentTarget.style.color = '#c5e063'; e.currentTarget.style.borderColor = '#2b4231'; } }}
-            onMouseLeave={e => { if (tab !== t.id) { e.currentTarget.style.color = '#6b8870'; e.currentTarget.style.borderColor = 'transparent'; } }}
+            onMouseEnter={e => { if (tab !== t.id) { e.currentTarget.style.color = '#f59e0b'; e.currentTarget.style.borderColor = '#252d3d'; } }}
+            onMouseLeave={e => { if (tab !== t.id) { e.currentTarget.style.color = '#475569'; e.currentTarget.style.borderColor = 'transparent'; } }}
           >
             <span style={{ fontSize: '0.78rem', opacity: 0.85 }}>{t.icon}</span>
             {t.label}
