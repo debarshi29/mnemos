@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { sendMessage, createRoadmap } from '../api';
+import { streamMessage, createRoadmap } from '../api';
 
 const S = {
   root: {
@@ -153,21 +153,46 @@ export default function Chat({ sessionId }) {
     setInput('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     setMessages(m => [...m, { role: 'user', content: text, ts: Date.now() }]);
-    setLoading(true);
+    setLoading(true); // show typing dots until first token arrives
+
     try {
-      const data = await sendMessage(text, sessionId);
-      setMessages(m => [...m, {
-        role: 'assistant', content: data.reply,
-        memoryUsed: data.memory_used, ts: Date.now(),
-      }]);
+      let firstToken = true;
+      await streamMessage(
+        text,
+        sessionId,
+        (token) => {
+          if (firstToken) {
+            firstToken = false;
+            setLoading(false);
+            // Add the assistant bubble with the first token
+            setMessages(m => [...m, { role: 'assistant', content: token, memoryUsed: [], ts: Date.now() }]);
+          } else {
+            setMessages(m => {
+              const copy = [...m];
+              const last = copy[copy.length - 1];
+              copy[copy.length - 1] = { ...last, content: last.content + token };
+              return copy;
+            });
+          }
+        },
+        (meta) => {
+          // Attach memory_used to the completed bubble
+          setMessages(m => {
+            const copy = [...m];
+            const last = copy[copy.length - 1];
+            copy[copy.length - 1] = { ...last, memoryUsed: meta.memory_used || [] };
+            return copy;
+          });
+        },
+      );
     } catch {
+      setLoading(false);
       setMessages(m => [...m, {
         role: 'assistant',
         content: '(Backend offline — start the FastAPI server)',
         memoryUsed: [], ts: Date.now(),
       }]);
     }
-    setLoading(false);
   }, [input, loading, sessionId]);
 
   const handleKey = (e) => {

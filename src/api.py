@@ -9,8 +9,10 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from src import llm_client
@@ -128,6 +130,48 @@ def chat(req: ChatRequest):
         session_id=session_id,
         episode_id=ep.episode_id,
         memory_used=memory_ids,
+    )
+
+
+@app.post("/chat/stream")
+def chat_stream(req: ChatRequest):
+    session_id = req.session_id or str(uuid.uuid4())
+
+    relevant_facts = retrieval.retrieve_for_context(req.message, top_k=5)
+    memory_context = "\n".join(f"- {f.content}" for f in relevant_facts) or "(none yet)"
+    memory_ids = [f.fact_id for f in relevant_facts]
+
+    history_eps = sqlite_store.get_episodes(user_id=_USER_ID, limit=10)
+    messages = []
+    for ep in reversed(history_eps):
+        if ep.session_id == session_id:
+            lines = ep.text.split("\n", 1)
+            if lines:
+                messages.append({"role": "user", "content": lines[0].replace("User: ", "", 1)})
+            if len(lines) > 1:
+                messages.append({"role": "assistant", "content": lines[1].replace("Assistant: ", "", 1)})
+    messages.append({"role": "user", "content": req.message})
+
+    def generate():
+        tokens: list[str] = []
+        for token in llm_client.stream(
+            messages,
+            system=_CHAT_SYSTEM.format(memory_context=memory_context),
+        ):
+            tokens.append(token)
+            yield f"data: {json.dumps({'token': token})}\n\n"
+
+        reply = "".join(tokens)
+        turn_text = f"User: {req.message}\nAssistant: {reply}"
+        ep = Episode(user_id=_USER_ID, session_id=session_id, text=turn_text)
+        sqlite_store.save_episode(ep)
+
+        yield f"data: {json.dumps({'done': True, 'episode_id': ep.episode_id, 'session_id': session_id, 'memory_used': memory_ids})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
