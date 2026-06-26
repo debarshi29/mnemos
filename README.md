@@ -353,6 +353,31 @@ mnemos/
 
 ---
 
+## Eval results
+
+The eval harness (`evals/run_evals.py`) runs 20 synthetic multi-session scripts against the live consolidation pipeline and checks recall, contradiction handling, provenance accuracy, and absence of superseded facts.
+
+**Latest score: 20 / 20 scripts passing**
+
+| Dimension | What is checked |
+|---|---|
+| Recall | Planted facts appear in active memory (cosine sim > 0.72) |
+| Absent | Superseded facts do NOT appear in active memory (sim > 0.80) |
+| Contradiction | Winner/loser correctly resolved; expected winner is active |
+| Provenance | Fact links back to the correct source episode |
+| Integrity | At least one fact created or updated (no silent total loss) |
+
+Scenarios covered: basic recall, contradiction resolution, preference updates, multi-session recall, multi-fact episodes, multi-source provenance, skill accumulation, superseded-fact retention, mixed fact types, re-observation confidence, multi-contradiction chains, no-false-contradiction guard, negative preferences, progress tracking, professional background, incremental refinement, dense consolidation (9 facts / episode), learning-goal completion, and contradiction chains.
+
+Run the suite yourself:
+
+```bash
+uv run python evals/run_evals.py
+# optional: --filter <name>  --verbose
+```
+
+---
+
 ## Architecture decisions
 
 Key decisions are recorded in `ADRs/`:
