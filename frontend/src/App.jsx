@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import Chat from './panels/Chat';
 import MemoryInspector from './panels/MemoryInspector';
 import ConsolidationLog from './panels/ConsolidationLog';
@@ -6,33 +6,41 @@ import Goals from './panels/Goals';
 import './App.css';
 
 const TABS = [
-  { id: 'chat',    label: 'Chat' },
-  { id: 'memory',  label: 'Memory' },
-  { id: 'goals',   label: 'Roadmap' },
-  { id: 'log',     label: 'Sleep Cycle' },
+  { id: 'chat',   label: 'Chat',        icon: '◎' },
+  { id: 'memory', label: 'Memory',      icon: '⬡' },
+  { id: 'goals',  label: 'Roadmap',     icon: '◈' },
+  { id: 'log',    label: 'Sleep Cycle', icon: '◉' },
 ];
 
 const SESSION_ID = crypto.randomUUID();
 
 const S = {
-  root: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#101a13' },
+  root: {
+    display: 'flex', flexDirection: 'column', height: '100vh',
+    background: '#101a13', overflow: 'hidden',
+  },
   nav: {
-    display: 'flex', alignItems: 'center', gap: '0.25rem',
-    padding: '0.6rem 1rem', borderBottom: '1px solid #2b4231',
-    background: '#16241a', flexShrink: 0,
+    display: 'flex', alignItems: 'center', gap: '0.3rem',
+    padding: '0.75rem 1.5rem',
+    borderBottom: '1px solid #1f3326',
+    background: '#13201a',
+    flexShrink: 0,
   },
   wordmark: {
-    fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: '1rem',
-    color: '#c5e063', marginRight: '1rem', letterSpacing: '-0.02em',
+    fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: '1.05rem',
+    color: '#c5e063', marginRight: '1.5rem', letterSpacing: '-0.02em',
+    userSelect: 'none',
   },
   tab: (active) => ({
-    fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.65rem',
-    textTransform: 'uppercase', letterSpacing: '0.14em',
-    padding: '0.35rem 0.9rem', borderRadius: 99, cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.68rem',
+    textTransform: 'uppercase', letterSpacing: '0.12em',
+    padding: '0.38rem 0.9rem', borderRadius: 99, cursor: 'pointer',
     background: active ? '#c5e063' : 'transparent',
-    color: active ? '#101a13' : '#9ab09a',
-    border: `1px solid ${active ? '#c5e063' : '#2b4231'}`,
-    transition: 'all 0.12s',
+    color: active ? '#101a13' : '#6b8870',
+    border: `1px solid ${active ? '#c5e063' : 'transparent'}`,
+    transition: 'all 0.13s',
+    fontWeight: active ? 500 : 400,
   }),
   panel: { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' },
 };
@@ -45,7 +53,14 @@ export default function App() {
       <nav style={S.nav}>
         <span style={S.wordmark}>mnemos</span>
         {TABS.map(t => (
-          <button key={t.id} style={S.tab(tab === t.id)} onClick={() => setTab(t.id)}>
+          <button
+            key={t.id}
+            style={S.tab(tab === t.id)}
+            onClick={() => setTab(t.id)}
+            onMouseEnter={e => { if (tab !== t.id) { e.currentTarget.style.color = '#c5e063'; e.currentTarget.style.borderColor = '#2b4231'; } }}
+            onMouseLeave={e => { if (tab !== t.id) { e.currentTarget.style.color = '#6b8870'; e.currentTarget.style.borderColor = 'transparent'; } }}
+          >
+            <span style={{ fontSize: '0.78rem', opacity: 0.85 }}>{t.icon}</span>
             {t.label}
           </button>
         ))}
