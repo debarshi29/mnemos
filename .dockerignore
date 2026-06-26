@@ -1,12 +1,30 @@
+# Python artifacts
 .venv/
-data/
 __pycache__/
 *.pyc
 *.pyo
-.env
-.git/
-frontend/node_modules/
-frontend/dist/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+
+# Data (mounted as a volume at runtime)
+data/
+
+# Secrets
+.env
+
+# Version control
+.git/
+.gitignore
+
+# Frontend has its own build context
+frontend/
+
+# Dev-only directories not needed in the image
+evals/
+ADRs/
+
+# Docs
+*.md
+ROADMAP*
+LICENSE
