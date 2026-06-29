@@ -18,12 +18,16 @@ WORKDIR /app
 # Only pyproject.toml and uv.lock are copied here — this layer is only
 # invalidated when dependencies actually change, not on every source edit.
 #
-# --no-install-project  install all declared deps but not the mnemos package
-#                       itself (src/ not needed at this point)
+# uv sync --no-install-project: install all declared deps into a venv but skip
+# the mnemos package itself (src/ not needed at this point).
+# --frozen              use uv.lock as-is, no resolution
 # --mount=type=cache    uv's wheel cache persists between builds (BuildKit)
 COPY pyproject.toml uv.lock* ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system --no-install-project .
+    uv sync --frozen --no-install-project
+
+# Activate the venv for all subsequent RUN / CMD steps
+ENV PATH="/app/.venv/bin:$PATH"
 
 # ── Layer 2: embedding model ───────────────────────────────────────────────────
 # Baked into the image so cold starts are instant (~90 MB from HuggingFace).
