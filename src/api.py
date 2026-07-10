@@ -356,3 +356,5 @@ def _seed_demo():
     for text in demo_episodes:
         ep = Episode(user_id=_USER_ID, session_id="demo_seed", text=text)
         sqlite_store.save_episode(ep)
+    episodes = sqlite_store.get_episodes(user_id=_USER_ID, limit=50)
+    run_consolidation(user_id=_USER_ID, episodes=episodes)

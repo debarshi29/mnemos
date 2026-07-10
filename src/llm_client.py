@@ -107,15 +107,16 @@ def _groq_stream(messages: list[dict], system: str | None, temperature: float) -
     if system:
         full_messages.append({"role": "system", "content": system})
     full_messages.extend(messages)
-    with client.chat.completions.stream(
+    response = client.chat.completions.create(
         model=get("llm.groq_model", "llama-3.1-8b-instant"),
         messages=full_messages,
         temperature=temperature,
-    ) as s:
-        for chunk in s:
-            token = chunk.choices[0].delta.content if chunk.choices else None
-            if token:
-                yield token
+        stream=True,
+    )
+    for chunk in response:
+        token = chunk.choices[0].delta.content if chunk.choices else None
+        if token:
+            yield token
 
 
 def _gemini_stream(messages: list[dict], system: str | None, temperature: float) -> Iterator[str]:
