@@ -2,17 +2,52 @@ import { useState, useEffect } from 'react';
 import { getConsolidationLog, triggerConsolidate } from '../api';
 import './ConsolidationLog.css';
 
-const STATS = [
-  { k: 'episodes_processed',      l: 'eps'      },
-  { k: 'facts_created',           l: 'created'  },
-  { k: 'facts_updated',           l: 'updated'  },
-  { k: 'contradictions_resolved', l: 'resolved' },
-  { k: 'facts_pruned',            l: 'pruned'   },
-];
-
-function fmtTs(ts) {
+function fmtWhen(ts) {
   const d = new Date(ts);
-  return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const isYesterday = d.toDateString() === new Date(now - 86400000).toDateString();
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return `today ${time}`;
+  if (isYesterday) return `yesterday ${time}`;
+  return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
+}
+
+function buildLogLines(e) {
+  const lines = [];
+  const pad = s => String(s).padStart(2, ' ');
+  lines.push({ t: `extract     ${pad(e.episodes_processed)} episodes processed`, c: 'dim' });
+  if (e.facts_created > 0 || e.facts_updated > 0) {
+    lines.push({ t: `dedupe      ${pad(e.facts_created)} created · ${e.facts_updated} updated`, c: 'dim' });
+  }
+  if (e.contradictions_resolved > 0) {
+    lines.push({ t: `contradict  ${pad(e.contradictions_resolved)} contradiction${e.contradictions_resolved !== 1 ? 's' : ''} resolved`, c: 'warn' });
+    e.details?.filter(d => d.type === 'contradiction_resolved').slice(0, 2).forEach(d => {
+      const kept = d.winner_content?.slice(0, 60) || '';
+      lines.push({ t: `            kept "${kept}${kept.length >= 60 ? '…' : ''}"`, c: 'warn' });
+    });
+  } else {
+    lines.push({ t: `contradict  0 conflicts`, c: 'dim' });
+  }
+  if (e.facts_pruned > 0) {
+    lines.push({ t: `prune       ${pad(e.facts_pruned)} fact${e.facts_pruned !== 1 ? 's' : ''} below confidence floor → archived`, c: 'dim' });
+  } else {
+    lines.push({ t: `prune       0 archived`, c: 'dim' });
+  }
+  const total = (e.facts_created ?? 0) + (e.facts_updated ?? 0);
+  lines.push({ t: `done        ${total} facts consolidated`, c: 'ok' });
+  return lines;
+}
+
+function sevenDayAgg(entries) {
+  const cutoff = Date.now() - 7 * 86400000;
+  const recent = entries.filter(e => new Date(e.timestamp).getTime() > cutoff);
+  return {
+    eps:  recent.reduce((s, e) => s + (e.episodes_processed ?? 0), 0),
+    mrg:  recent.reduce((s, e) => s + (e.facts_created ?? 0) + (e.facts_updated ?? 0), 0),
+    con:  recent.reduce((s, e) => s + (e.contradictions_resolved ?? 0), 0),
+    prn:  recent.reduce((s, e) => s + (e.facts_pruned ?? 0), 0),
+  };
 }
 
 export default function ConsolidationLog() {
@@ -38,12 +73,16 @@ export default function ConsolidationLog() {
 
   const toggle = id => setExpanded(e => ({ ...e, [id]: !e[id] }));
 
+  const agg = sevenDayAgg(entries);
+
   return (
     <div className="sleep">
-      <div className="sleep-bar">
-        <span className="sleep-title">Sleep Cycle</span>
+      <div className="sleep-hd">
+        <span className="sleep-hd-num">04</span>
+        <span className="sleep-hd-title">Sleep Cycle</span>
+        <span className="sleep-hd-meta">extract → dedupe → contradict → prune</span>
         <button className="btn-run" onClick={runNow} disabled={running}>
-          {running ? 'running…' : '↻ run now'}
+          {running ? 'running…' : '▸ RUN NOW'}
         </button>
       </div>
 
@@ -54,75 +93,67 @@ export default function ConsolidationLog() {
         <div className="sleep-empty">
           <span className="sleep-empty-hint">
             No runs yet.<br />
-            Hit "run now" to start the sleep cycle.
+            Hit "RUN NOW" to start the sleep cycle.
           </span>
         </div>
       )}
 
-      <div className="run-list">
-        {entries.map(e => {
-          const total = (e.facts_created ?? 0) + (e.facts_updated ?? 0);
-          const pct   = e.episodes_processed > 0
-            ? Math.min((total / e.episodes_processed) * 100, 100) : 0;
-          const open  = !!expanded[e.run_id];
+      {!loading && !error && entries.length > 0 && (
+        <div className="sleep-body">
+          {/* 7-day aggregate */}
+          <div className="agg-grid">
+            <div className="agg-cell">
+              <span className="agg-n">{agg.eps}</span>
+              <span className="agg-l">EXTRACTED · 7D</span>
+            </div>
+            <div className="agg-cell">
+              <span className="agg-n">{agg.mrg}</span>
+              <span className="agg-l">MERGED · 7D</span>
+            </div>
+            <div className="agg-cell">
+              <span className="agg-n">{agg.con}</span>
+              <span className="agg-l">CONTRADICTIONS · 7D</span>
+            </div>
+            <div className="agg-cell">
+              <span className="agg-n">{agg.prn}</span>
+              <span className="agg-l">PRUNED · 7D</span>
+            </div>
+          </div>
 
-          return (
-            <div key={e.run_id} className="run">
-              <div className="run-hd">
-                <span className="run-id">{e.run_id.slice(0, 8)}</span>
-                <span className="run-ts">{fmtTs(e.timestamp)}</span>
-              </div>
-
-              <div className="run-stats">
-                {STATS.map(s => (
-                  <div key={s.k} className="s-cell">
-                    <span className="s-n">{e[s.k] ?? 0}</span>
-                    <span className="s-l">{s.l}</span>
+          {/* Run rows */}
+          <div className="run-list">
+            {entries.map(e => {
+              const open = !!expanded[e.run_id];
+              const lines = buildLogLines(e);
+              return (
+                <div key={e.run_id} className="run">
+                  <div className="run-hd" onClick={() => toggle(e.run_id)}>
+                    <span className="run-id">{e.run_id.slice(0, 8)}</span>
+                    <span className="run-when">{fmtWhen(e.timestamp)}</span>
+                    <div className="run-stats-inline">
+                      <span className="run-stat">ext <span>{e.episodes_processed ?? 0}</span></span>
+                      <span className="run-stat">mrg <span>{(e.facts_created ?? 0) + (e.facts_updated ?? 0)}</span></span>
+                      <span className={`run-stat${e.contradictions_resolved > 0 ? ' warn' : ''}`}>
+                        con <span>{e.contradictions_resolved ?? 0}</span>
+                      </span>
+                      <span className="run-stat">prn <span>{e.facts_pruned ?? 0}</span></span>
+                    </div>
+                    <span className="run-chev">{open ? '−' : '+'}</span>
                   </div>
-                ))}
-              </div>
 
-              <div className="run-prog">
-                <div className="prog-bar">
-                  <div className="prog-bar-fill" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-
-              {e.details?.length > 0 && (
-                <>
-                  <button
-                    className={`run-tog${open ? ' open' : ''}`}
-                    onClick={() => toggle(e.run_id)}
-                  >
-                    <span>{open ? '▾' : '▸'}</span>
-                    {e.details.length} event{e.details.length !== 1 ? 's' : ''}
-                  </button>
                   {open && (
-                    <div className="run-events">
-                      {e.details.map((d, i) => (
-                        <div key={i} className={`ev ${d.type}`}>
-                          <span className="ev-type">{d.type.replace(/_/g, ' ')}</span>
-                          {d.type === 'contradiction_resolved' && (
-                            <span>
-                              kept "{d.winner_content?.slice(0, 80)}"
-                              {d.loser_content
-                                ? <> · dropped "{d.loser_content.slice(0, 80)}"</>
-                                : null}
-                            </span>
-                          )}
-                          {d.type === 'pruned' && (
-                            <span>"{d.content?.slice(0, 100)}" — conf {d.confidence?.toFixed(2)}</span>
-                          )}
-                        </div>
+                    <div className="run-log">
+                      {lines.map((l, i) => (
+                        <div key={i} className={`log-line log-${l.c}`}>{l.t}</div>
                       ))}
                     </div>
                   )}
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
