@@ -6,21 +6,10 @@ function fmt(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Pair flat message array into exchanges: { user, assistant }
-// Standalone assistant messages (initial greeting) → { user: null, assistant }
-function toExchanges(msgs) {
-  const out = [];
-  let pending = null;
-  for (const m of msgs) {
-    if (m.role === 'user') {
-      pending = m;
-    } else {
-      out.push({ user: pending, assistant: m });
-      pending = null;
-    }
-  }
-  if (pending) out.push({ user: pending, assistant: null });
-  return out;
+function cellRow(v, n) {
+  return Array.from({ length: n }, (_, i) => ({
+    bg: i < Math.round(v * n) ? 'var(--ac)' : 'hsl(228,12%,14%)',
+  }));
 }
 
 export default function Chat({ sessionId }) {
@@ -30,13 +19,14 @@ export default function Chat({ sessionId }) {
     memoryUsed: [],
     ts: Date.now(),
   }]);
-  const [input, setInput]   = useState('');
+  const [input, setInput]     = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPlan, setShowPlan] = useState(false);
+  const [recalled, setRecalled] = useState([]);
+  const [showPlan, setShowPlan]   = useState(false);
   const [planTopic, setPlanTopic] = useState('');
-  const [planBg, setPlanBg]     = useState('');
-  const [planBusy, setPlanBusy] = useState(false);
-  const bottomRef  = useRef(null);
+  const [planBg, setPlanBg]       = useState('');
+  const [planBusy, setPlanBusy]   = useState(false);
+  const bottomRef   = useRef(null);
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -45,7 +35,7 @@ export default function Chat({ sessionId }) {
 
   const autoResize = el => {
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 116) + 'px';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
   };
 
   const send = useCallback(async () => {
@@ -72,11 +62,13 @@ export default function Chat({ sessionId }) {
           }
         },
         meta => {
+          const used = meta.memory_used || [];
           setMessages(m => {
             const c = [...m], l = c[c.length - 1];
-            c[c.length - 1] = { ...l, memoryUsed: meta.memory_used || [] };
+            c[c.length - 1] = { ...l, memoryUsed: used };
             return c;
           });
+          if (used.length) setRecalled(used);
         },
       );
     } catch {
@@ -84,7 +76,8 @@ export default function Chat({ sessionId }) {
       setMessages(m => [...m, {
         role: 'assistant',
         content: 'Backend offline — run `make dev` to start the server.',
-        memoryUsed: [], ts: Date.now(),
+        memoryUsed: [],
+        ts: Date.now(),
       }]);
     }
   }, [input, loading, sessionId]);
@@ -101,89 +94,146 @@ export default function Chat({ sessionId }) {
       setMessages(m => [...m, {
         role: 'assistant',
         content: `Roadmap for "${data.topic}" — ${data.phases.length} phases saved. Open the Roadmap tab to track progress.`,
-        memoryUsed: [], ts: Date.now(),
+        memoryUsed: [],
+        ts: Date.now(),
       }]);
       setShowPlan(false); setPlanTopic(''); setPlanBg('');
     } catch {
       setMessages(m => [...m, {
-        role: 'assistant', content: 'Planner failed — check backend logs.',
-        memoryUsed: [], ts: Date.now(),
+        role: 'assistant',
+        content: 'Planner failed — check backend logs.',
+        memoryUsed: [],
+        ts: Date.now(),
       }]);
     }
     setPlanBusy(false);
   };
 
-  const exchanges = toExchanges(messages);
-
   return (
     <div className="chat">
-      <div className="thread">
-        {exchanges.map((ex, i) => (
-          <div key={i} className="exchange">
-            {ex.user && (
-              <div className="user-line">
-                <span className="user-text">{ex.user.content}</span>
+      <div className="chat-main">
+        <div className="chat-hd">
+          <span className="chat-hd-num">01</span>
+          <span className="chat-hd-title">Session</span>
+          <span className="chat-hd-meta">{sessionId.slice(0, 8)} · {recalled.length} facts in context</span>
+        </div>
+
+        <div className="chat-body">
+          <div className="chat-msgs">
+            {messages.map((m, i) => (
+              <div key={i} className="msg-row" style={{ animationDelay: `${i * 0.015}s` }}>
+                <div className="msg-who">
+                  <span className={`msg-role ${m.role === 'user' ? 'you' : 'sys'}`}>
+                    {m.role === 'user' ? 'YOU' : 'MNEM'}
+                  </span>
+                  <span className="msg-time">{fmt(m.ts)}</span>
+                </div>
+                <div className="msg-body">
+                  <div className="msg-text">{m.content}</div>
+                  {m.memoryUsed?.length > 0 && (
+                    <div className="msg-chips">
+                      {m.memoryUsed.slice(0, 5).map((mu, j) => (
+                        <span key={j} className="chip">
+                          <span className="chip-id">
+                            {typeof mu === 'string' ? mu.slice(0, 8) : (mu.fact_id || '').slice(0, 8)}
+                          </span>
+                          {mu.score != null && (
+                            <span className="chip-score">{Number(mu.score).toFixed(2)}</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {loading && (
+              <div className="think-row">
+                <div className="think-who">
+                  <span className="think-who-label">MNEM</span>
+                </div>
+                <div className="think-text">
+                  querying vector store
+                  <span className="blink-cursor" />
+                </div>
               </div>
             )}
-
-            {ex.assistant && (
-              <>
-                <div className="asst-text">{ex.assistant.content}</div>
-                <div className="ex-rule">
-                  <div className="ex-line" />
-                  <div className="ex-meta">
-                    {ex.assistant.memoryUsed?.length > 0 && (
-                      <span className="ex-recalled">
-                        {ex.assistant.memoryUsed.length} recalled
-                      </span>
-                    )}
-                    <span>{fmt(ex.assistant.ts)}</span>
-                  </div>
-                </div>
-              </>
-            )}
+            <div ref={bottomRef} />
           </div>
-        ))}
+        </div>
 
-        {loading && (
-          <div className="typing-row">
-            <div className="typing-dots">
-              <div className="dot" />
-              <div className="dot" />
-              <div className="dot" />
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      <div className="chat-foot">
-        <div className="input-row">
-          <div className="input-wrap">
+        <div className="chat-foot">
+          <div className="chat-foot-inner">
+            <span className="chat-prompt">❯</span>
             <textarea
               ref={textareaRef}
               className="input-field"
               value={input}
               onChange={e => { setInput(e.target.value); autoResize(e.target); }}
               onKeyDown={onKey}
-              placeholder="Ask anything…"
+              placeholder="transmit to mnemos — memory context injected automatically"
               rows={1}
             />
-          </div>
-          <div className="input-btns">
-            <button className="btn-road" onClick={() => setShowPlan(true)}>
-              roadmap
-            </button>
-            <button
-              className="btn-send"
-              onClick={send}
-              disabled={!input.trim() || loading}
-            >
-              Send
-            </button>
+            <div className="chat-btns">
+              <button className="btn-road" onClick={() => setShowPlan(true)}>
+                ROADMAP
+              </button>
+              <button
+                className="btn-send"
+                onClick={send}
+                disabled={!input.trim() || loading}
+              >
+                SEND ↵
+              </button>
+            </div>
+            <span className="sess-id">{sessionId.slice(0, 8)}</span>
           </div>
         </div>
-        <div className="sess-id">{sessionId.slice(0, 8)}</div>
+      </div>
+
+      {/* Recall trace rail */}
+      <div className="recall-rail">
+        <div className="rr-hd">
+          <span className="rr-title">RECALL TRACE</span>
+          {recalled.length > 0 && (
+            <span className="rr-count">{recalled.length} hits</span>
+          )}
+        </div>
+
+        {recalled.length === 0 ? (
+          <p className="rr-empty">
+            Recalled facts will appear here after the first exchange.
+          </p>
+        ) : (
+          <>
+            <div className="rr-list">
+              {recalled.slice(0, 5).map((mu, i) => {
+                const id = typeof mu === 'string' ? mu : (mu.fact_id || '');
+                const text = mu.content || mu.text || '';
+                const score = mu.score != null ? Number(mu.score) : 0;
+                return (
+                  <div key={i} className="rr-item">
+                    <div className="rr-item-hd">
+                      <span className="rr-id">{id.slice(0, 8)}</span>
+                      <span className="rr-score">{score.toFixed(2)}</span>
+                    </div>
+                    {text && <div className="rr-text">{text.slice(0, 120)}</div>}
+                    <div className="rr-cells">
+                      {cellRow(score, 10).map((c, j) => (
+                        <div key={j} className="rr-cell" style={{ background: c.bg }} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="rr-formula">
+              rank = cos_sim × e^(−Δt/t½)<br />
+              recall boosts strength +0.05
+            </p>
+          </>
+        )}
       </div>
 
       {showPlan && (
@@ -208,12 +258,14 @@ export default function Chat({ sessionId }) {
             />
             {planBusy
               ? <p className="modal-spin">Building your roadmap…</p>
-              : <div className="modal-btns">
+              : (
+                <div className="modal-btns">
                   <button className="btn-cancel" onClick={() => setShowPlan(false)}>Cancel</button>
                   <button className="btn-gen" onClick={handlePlan} disabled={!planTopic.trim()}>
                     Generate
                   </button>
                 </div>
+              )
             }
           </div>
         </div>
