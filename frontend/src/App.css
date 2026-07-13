@@ -1,75 +1,172 @@
-.app {
-  display: flex;
-  flex-direction: column;
+/* Shell grid: 196px rail | content / 32px footer */
+.shell {
+  display: grid;
+  grid-template-columns: 196px 1fr;
+  grid-template-rows: 1fr 32px;
   height: 100vh;
+  min-height: 600px;
   overflow: hidden;
+  /* ambient glows live on shell so rail can blur against them */
+  background: var(--bg);
+  background-image:
+    radial-gradient(900px circle at 12% -4%, hsla(228,76%,72%,0.08), transparent 58%),
+    radial-gradient(700px circle at 94% 112%, hsla(40,88%,57%,0.05), transparent 56%);
 }
 
-/* ── Top bar ── */
-.bar {
-  height: 44px;
-  display: flex;
-  align-items: stretch;
-  border-bottom: 1px solid var(--b1);
-  background: var(--s1);
-  flex-shrink: 0;
-  padding: 0 24px;
-}
-
-.bar-logo {
-  font-family: var(--fm);
-  font-size: var(--tm);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--t1);
-  display: flex;
-  align-items: center;
-  margin-right: 24px;
-  user-select: none;
-  flex-shrink: 0;
-}
-.bar-logo i { font-style: normal; color: var(--ac); }
-
-.bar-div {
-  width: 1px;
-  background: var(--b1);
-  margin: 10px 20px 10px 0;
-  flex-shrink: 0;
-}
-
-/* Tabs sit flush on the bottom border of the bar */
-.tab {
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  font-size: var(--ts);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--t3);
-  position: relative;
-  border: none;
-  background: none;
-  transition: color 0.1s;
-}
-.tab:hover { color: var(--t2); }
-.tab.on   { color: var(--t1); }
-
-/* Underline indicator — flush with the bar's bottom border */
-.tab.on::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 14px;
-  right: 14px;
-  height: 2px;
-  background: var(--ac);
-  border-radius: 2px 2px 0 0;
-}
-
-.panel {
-  flex: 1;
-  min-height: 0;
+/* ── RAIL ── */
+.rail {
+  grid-row: 1 / 3;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  border-right: 1px solid var(--b1);
+  background: var(--s1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
+
+.rail-logo {
+  padding: 22px 18px 16px;
+  border-bottom: 1px solid var(--b0);
+}
+.rail-logotype {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.rail-dot { color: var(--am); }
+.rail-sub {
+  font-family: var(--fm);
+  font-size: var(--tx);
+  color: var(--t4);
+  margin-top: 3px;
+}
+
+.rail-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0;
+}
+
+.rnav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-left: 2px solid transparent;
+  text-align: left;
+  width: 100%;
+  transition: background 0.1s, border-color 0.1s;
+}
+.rnav-btn:hover { background: hsla(228,14%,10%,0.8); }
+.rnav-btn.on {
+  background: hsl(228,20%,10%);
+  border-left-color: var(--ac);
+}
+
+.rnav-num {
+  font-family: var(--fm);
+  font-size: var(--tx);
+  color: var(--t5);
+  width: 16px;
+  flex-shrink: 0;
+}
+.rnav-btn.on .rnav-num { color: var(--am); }
+
+.rnav-label {
+  font-size: var(--ts);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.rnav-btn.on .rnav-label { color: var(--t1); }
+
+/* Strength field + system stats */
+.rail-foot {
+  margin-top: auto;
+  padding: 16px 18px;
+  border-top: 1px solid var(--b0);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sf-lbl {
+  font-family: var(--fm);
+  font-size: var(--tx);
+  letter-spacing: 0.12em;
+  color: var(--t4);
+  margin-bottom: 7px;
+}
+.sf-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 34px;
+}
+.sf-bar { width: 3px; border-radius: 1px 1px 0 0; }
+.sf-caption {
+  font-family: var(--fm);
+  font-size: var(--tx);
+  color: var(--t4);
+  margin-top: 5px;
+}
+.sf-em { color: var(--am); }
+
+.sys-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sys-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--fm);
+  font-size: var(--tx);
+}
+.sys-k { color: var(--t4); }
+.sys-v { color: var(--t2); }
+.sys-ok {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gr);
+}
+.sys-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gr);
+}
+
+/* ── MAIN ── */
+.main {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* dot grid on top of shell glows */
+  background-image: radial-gradient(hsl(228,12%,8%) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* ── STATUSBAR ── */
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 22px;
+  border-top: 1px solid var(--b0);
+  background: var(--s1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  font-family: var(--fm);
+  font-size: var(--tx);
+  color: var(--t4);
+  flex-shrink: 0;
+}
+.sb-val { color: var(--am); }
+.sb-val.ok { color: var(--gr); }
+.sb-push { margin-left: auto; display: flex; gap: 18px; }
