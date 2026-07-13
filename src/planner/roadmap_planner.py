@@ -20,7 +20,7 @@ from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 
 from src.config import get, api_key
-from src.schema import GoalFact, GoalFactProvenance, new_id
+from src.schema import GoalFact, GoalFactProvenance
 from src.store import sqlite_store
 from src.planner.tools import PLANNER_TOOLS
 

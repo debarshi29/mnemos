@@ -89,7 +89,7 @@ def fetch_page(url: str) -> str:
         return f"Failed to fetch {url}: {e}"
 
     from bs4 import BeautifulSoup
-    soup = BeautifulSoup(resp.text, "lxml")
+    soup = BeautifulSoup(resp.text, "html.parser")
     for tag in soup(["script", "style", "nav", "footer", "header"]):
         tag.decompose()
     text = " ".join(soup.get_text(separator=" ").split())

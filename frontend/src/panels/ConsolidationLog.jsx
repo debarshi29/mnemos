@@ -104,10 +104,13 @@ export default function ConsolidationLog() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [expanded, setExpanded] = useState({});
+  const [error, setError] = useState(null);
 
   const load = () => {
-    setLoading(true);
-    getConsolidationLog().then(d => { setEntries(d); setLoading(false); }).catch(() => setLoading(false));
+    setLoading(true); setError(null);
+    getConsolidationLog()
+      .then(d => { setEntries(d); setLoading(false); })
+      .catch(e => { setError(e?.message || 'API unreachable'); setLoading(false); });
   };
 
   useEffect(() => { load(); }, []);
@@ -131,7 +134,13 @@ export default function ConsolidationLog() {
 
       {loading && <p style={{ padding: '1.5rem 2rem', color: '#2d3748', fontStyle: 'italic', fontSize: '0.85rem' }}>Loading…</p>}
 
-      {!loading && entries.length === 0 && (
+      {error && (
+        <p style={{ padding: '1rem 2rem', color: '#f87171', fontSize: '0.78rem', fontFamily: "'IBM Plex Mono', monospace" }}>
+          ✗ {error}
+        </p>
+      )}
+
+      {!loading && !error && entries.length === 0 && (
         <div style={S.empty}>
           <span style={{ fontSize: '1.4rem', opacity: 0.3 }}>◉</span>
           <span style={S.emptyHint}>

@@ -79,10 +79,13 @@ const S = {
 export default function Goals() {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const load = () => {
-    setLoading(true);
-    getGoals().then(g => { setGoals(g); setLoading(false); }).catch(() => setLoading(false));
+    setLoading(true); setError(null);
+    getGoals()
+      .then(g => { setGoals(g); setLoading(false); })
+      .catch(e => { setError(e?.message || 'API unreachable'); setLoading(false); });
   };
 
   useEffect(() => { load(); }, []);
@@ -115,7 +118,13 @@ export default function Goals() {
 
       {loading && <p style={{ padding: '1.5rem 2rem', color: '#2d3748', fontStyle: 'italic', fontSize: '0.85rem' }}>Loading…</p>}
 
-      {!loading && goals.length === 0 && (
+      {error && (
+        <p style={{ padding: '1rem 2rem', color: '#f87171', fontSize: '0.78rem', fontFamily: "'IBM Plex Mono', monospace" }}>
+          ✗ {error}
+        </p>
+      )}
+
+      {!loading && !error && goals.length === 0 && (
         <div style={S.empty}>
           <span style={{ fontSize: '1.4rem', opacity: 0.3 }}>◈</span>
           <span style={S.emptyHint}>

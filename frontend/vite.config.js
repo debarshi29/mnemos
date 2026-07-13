@@ -12,6 +12,7 @@ export default defineConfig({
       '/episodes': 'http://localhost:8000',
       '/goals': 'http://localhost:8000',
       '/plan': 'http://localhost:8000',
+      '/health': 'http://localhost:8000',
     },
   },
 })

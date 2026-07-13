@@ -2,7 +2,9 @@
 Consolidation graph — the "sleep cycle".
 LangGraph subgraph with four nodes: extract → dedupe → contradiction-check → prune.
 
-Triggered manually or at end-of-session (config: consolidation.trigger).
+Triggered via POST /memory/consolidate (manual) or automatically after each chat
+turn when consolidation.trigger != 'manual' and enough new episodes have accumulated
+(see _maybe_auto_consolidate in api.py).
 Writes new/updated Facts, provenance links, and a ConsolidationLogEntry.
 """
 
@@ -45,6 +47,7 @@ class ConsolidationState(TypedDict):
     episodes: list[Episode]
     extracted: list[dict]          # raw {"content", "type", "episode_ids"}
     new_facts: list[Fact]
+    new_fact_ep_ids: dict          # fact_id -> list[episode_id] for facts created this run
     log: ConsolidationLogEntry
 
 
@@ -120,8 +123,7 @@ def _dedupe(state: ConsolidationState) -> ConsolidationState:
             ep_ts = datetime.fromisoformat(ep_ts_raw) if ep_ts_raw else datetime.now(timezone.utc)
             new_fact = Fact(content=content, type=fact_type, confidence=1.0, last_seen=ep_ts)
             new_facts.append(new_fact)
-            for eid in ep_ids:
-                new_fact._episode_ids = getattr(new_fact, "_episode_ids", []) + [eid]
+            state["new_fact_ep_ids"][new_fact.fact_id] = ep_ids
             log["facts_created"] = log.get("facts_created", 0) + 1
 
     state["new_facts"] = new_facts
@@ -141,7 +143,7 @@ def _contradiction_check(state: ConsolidationState) -> ConsolidationState:
     resolved_count = 0
 
     for new_fact in state["new_facts"]:
-        ep_ids = getattr(new_fact, "_episode_ids", [])
+        ep_ids = state["new_fact_ep_ids"].get(new_fact.fact_id, [])
         conflicts = contra.find_contradictions(new_fact, existing_facts)
         if conflicts:
             for conflicting in conflicts:
@@ -194,6 +196,7 @@ def _prune(state: ConsolidationState) -> ConsolidationState:
         if fact.confidence < _CONF_FLOOR:
             fact.superseded_by = "pruned"
             sqlite_store.save_fact(fact)
+            vector_store.delete_fact(fact.fact_id)
             pruned += 1
             log.setdefault("details", []).append({
                 "type": "pruned",
@@ -249,6 +252,7 @@ def run_consolidation(user_id: str, episodes: list[Episode]) -> ConsolidationLog
         "episodes": episodes,
         "extracted": [],
         "new_facts": [],
+        "new_fact_ep_ids": {},
         "log": log_entry.model_dump(),
     }
 

@@ -6,7 +6,8 @@ Routes: /chat, /memory/facts, /memory/fact/{id}, /memory/consolidate,
 
 from __future__ import annotations
 import uuid
-from datetime import datetime, timezone
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import json
@@ -15,15 +16,26 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+import threading
+
 from src import llm_client
 from src.config import get
 from src.memory import retrieval
 from src.memory.consolidation import run_consolidation
 from src.planner.roadmap_planner import plan_roadmap
-from src.schema import Episode, FactProvenance, GoalFact, new_id
+from src.schema import Episode
 from src.store import sqlite_store, embeddings, vector_store
 
-app = FastAPI(title="mnemos API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    sqlite_store.init_db()
+    if get("seed_demo", False):
+        _seed_demo()
+    yield
+
+
+app = FastAPI(title="mnemos API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -74,15 +86,6 @@ class IngestRequest(BaseModel):
     session_id: Optional[str] = None
 
 
-# ── Startup ────────────────────────────────────────────────────────────────────
-
-@app.on_event("startup")
-def startup():
-    sqlite_store.init_db()
-    if get("seed_demo", False):
-        _seed_demo()
-
-
 # ── Health ────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
@@ -124,6 +127,7 @@ def chat(req: ChatRequest):
     turn_text = f"User: {req.message}\nAssistant: {reply}"
     ep = Episode(user_id=_USER_ID, session_id=session_id, text=turn_text)
     sqlite_store.save_episode(ep)
+    _maybe_auto_consolidate()
 
     return ChatResponse(
         reply=reply,
@@ -168,6 +172,10 @@ def chat_stream(req: ChatRequest):
 
         yield f"data: {json.dumps({'done': True, 'episode_id': ep.episode_id, 'session_id': session_id, 'memory_used': memory_ids})}\n\n"
 
+        # Auto-consolidate in a background thread — runs after the SSE client receives
+        # the done event, so it doesn't hold the connection open during LLM calls.
+        threading.Thread(target=_maybe_auto_consolidate, daemon=True).start()
+
     return StreamingResponse(
         generate(),
         media_type="text/event-stream",
@@ -201,7 +209,11 @@ def get_fact_with_provenance(fact_id: str):
 
 @app.post("/memory/consolidate")
 def consolidate(req: ConsolidateRequest = ConsolidateRequest()):
-    episodes = sqlite_store.get_episodes(user_id=_USER_ID, limit=500)
+    if req.since_hours is not None:
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=req.since_hours)
+        episodes = sqlite_store.get_episodes_since(user_id=_USER_ID, since=cutoff)
+    else:
+        episodes = sqlite_store.get_episodes(user_id=_USER_ID, limit=500)
     if not episodes:
         return {"message": "No episodes to consolidate."}
     log = run_consolidation(user_id=_USER_ID, episodes=episodes)
@@ -337,6 +349,28 @@ def create_roadmap(req: PlanRequest):
         "episode_id": ep.episode_id,
         "session_id": session_id,
     }
+
+
+# ── Auto-consolidation ─────────────────────────────────────────────────────────
+
+def _maybe_auto_consolidate() -> None:
+    """Run consolidation after a chat turn when the trigger config warrants it.
+
+    trigger: manual       — never runs automatically (default)
+    trigger: end_of_session / both — runs whenever min_episodes_to_trigger
+             new episodes have accumulated since the last consolidation run.
+    """
+    trigger = get("consolidation.trigger", "manual")
+    if trigger == "manual":
+        return
+    min_eps = int(get("consolidation.min_episodes_to_trigger", 3))
+    log_entries = sqlite_store.get_consolidation_log(user_id=_USER_ID, limit=1)
+    if log_entries:
+        new_eps = sqlite_store.get_episodes_since(user_id=_USER_ID, since=log_entries[0].timestamp)
+    else:
+        new_eps = sqlite_store.get_episodes(user_id=_USER_ID, limit=500)
+    if len(new_eps) >= min_eps:
+        run_consolidation(user_id=_USER_ID, episodes=new_eps)
 
 
 # ── Demo seed ──────────────────────────────────────────────────────────────────

@@ -184,7 +184,12 @@ export default function MemoryInspector() {
 
   const consolidate = async () => {
     setConsolidating(true);
-    try { await triggerConsolidate(); load(); } catch {}
+    try {
+      await triggerConsolidate();
+      setSelected(null);
+      setProvenance(null);
+      load();
+    } catch {}
     setConsolidating(false);
   };
 

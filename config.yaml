@@ -27,7 +27,7 @@ memory:
 
 consolidation:
   trigger: manual                   # manual | end_of_session | both              [OWNER CALL]
-  min_episodes_to_trigger: 3        # minimum new episodes before auto-trigger (if trigger != manual)
+  min_episodes_to_trigger: 3        # new episodes since last run before auto-trigger fires
 
 user:
   default_user_id: local_user       # single-user, stable partition key

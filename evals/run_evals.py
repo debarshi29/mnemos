@@ -35,11 +35,13 @@ def _cosine(a: str, b: str) -> float:
 
 
 def _full_wipe() -> None:
-    """Truncate all tables so each eval script starts from a clean slate.
+    """Truncate all tables and reset the vector store so each eval script
+    starts from a clean slate.
 
     Avoids cross-contamination between scripts: facts has no user_id, so
     facts from script N would appear as existing_facts for script N+1
-    causing spurious dedupe hits and missed contradictions.
+    causing spurious dedupe hits and missed contradictions. Ghost vectors
+    in Qdrant cause the same problem for the embedding-based dedupe path.
     """
     conn = sqlite3.connect(_DB_PATH)
     cur = conn.cursor()
@@ -49,6 +51,16 @@ def _full_wipe() -> None:
     cur.execute("DELETE FROM consolidation_log")
     conn.commit()
     conn.close()
+
+    # Purge Qdrant so ghost embeddings from this script don't contaminate the next
+    from src.store import vector_store as _vs
+    from qdrant_client.models import Distance, VectorParams
+    client = _vs._get_client()
+    client.delete_collection(_vs._COLLECTION)
+    client.create_collection(
+        collection_name=_vs._COLLECTION,
+        vectors_config=VectorParams(size=_vs._DIM, distance=Distance.COSINE),
+    )
 
 
 def _facts_for_user(episodes: list) -> list:
