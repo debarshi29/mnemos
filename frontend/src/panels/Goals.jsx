@@ -34,10 +34,9 @@ export default function Goals() {
   return (
     <div className="goals">
       <div className="goals-hd">
-        <span className="goals-hd-num">03</span>
-        <span className="goals-hd-title">Roadmap</span>
+        <span className="goals-hd-title">roadmap</span>
         {goals.length > 0 && (
-          <span className="goals-hd-meta">{done}/{goals.length} done</span>
+          <span className="goals-hd-frac">{done}/{goals.length} done</span>
         )}
       </div>
 
@@ -48,7 +47,7 @@ export default function Goals() {
         <div className="goals-empty">
           <span className="goals-empty-hint">
             No roadmap yet.<br />
-            In Chat, click "ROADMAP",<br />
+            In Chat, click "roadmap",<br />
             enter a topic and your background.
           </span>
         </div>
@@ -56,58 +55,46 @@ export default function Goals() {
 
       {goals.length > 0 && (
         <div className="goals-body">
-          {Object.entries(byTopic).map(([topic, phases], topicIdx) => {
+          {Object.entries(byTopic).map(([topic, phases]) => {
             const sorted = [...phases].sort((a, b) => a.phase_index - b.phase_index);
-            const donePct = sorted.length
-              ? Math.round((sorted.filter(p => p.status === 'done').length / sorted.length) * 100)
-              : 0;
-            const ghost = String(topicIdx + 1).padStart(2, '0');
+            const doneCount = sorted.filter(p => p.status === 'done').length;
 
             return (
               <div key={topic} className="topic">
-                <div className="topic-grid">
-                  <div className="topic-left">
-                    <div className="topic-ghost">{ghost}</div>
-                    <div className="topic-name">{topic}</div>
-                    <div className="topic-prog">
-                      <div className="prog-track">
-                        <div className="prog-fill" style={{ width: `${donePct}%` }} />
-                      </div>
-                      <span className="prog-frac">
-                        {sorted.filter(p => p.status === 'done').length}/{sorted.length}
-                      </span>
-                    </div>
-                  </div>
+                <div className="topic-hd">
+                  <span className="topic-name">{topic}</span>
+                  <span className="topic-frac">{doneCount}/{sorted.length}</span>
+                </div>
 
-                  <div className="phases">
-                    {sorted.map(g => (
-                      <div key={g.goal_id} className={`phase ${g.status}`}>
-                        <div className="phase-body">
-                          <div className="phase-title">{g.phase_content}</div>
-                          {g.metadata?.resources?.length > 0 && (
-                            <div className="phase-links">
-                              {g.metadata.resources.slice(0, 3).map((r, i) => (
-                                <a key={i} href={r} target="_blank" rel="noreferrer" className="phase-link">
-                                  ↗ {r}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <div className="status-ctrl">
-                          {['not_started', 'in_progress', 'done'].map(s => (
-                            <button
-                              key={s}
-                              className={`sctl-btn s-${s}${g.status === s ? ' on' : ''}`}
-                              onClick={() => setStatus(g.goal_id, s)}
-                            >
-                              {LABELS[s]}
-                            </button>
-                          ))}
-                        </div>
+                <div className="phases">
+                  {sorted.map((g, idx) => (
+                    <div key={g.goal_id} className={`phase ${g.status}`}>
+                      <span className="phase-num">{idx + 1}</span>
+                      <div className="phase-body">
+                        <div className="phase-title">{g.phase_content}</div>
+                        {g.metadata?.resources?.length > 0 && (
+                          <div className="phase-links">
+                            {g.metadata.resources.slice(0, 3).map((r, i) => (
+                              <a key={i} href={r} target="_blank" rel="noreferrer" className="phase-link">
+                                ↗ {r}
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                      <div className="status-ctrl">
+                        {['not_started', 'in_progress', 'done'].map(s => (
+                          <button
+                            key={s}
+                            className={`sctl-btn s-${s}${g.status === s ? ' on' : ''}`}
+                            onClick={() => setStatus(g.goal_id, s)}
+                          >
+                            {LABELS[s]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             );

@@ -14,13 +14,6 @@ function ageFmt(ts) {
   return d === 0 ? 'today' : d === 1 ? '1d' : `${d}d`;
 }
 
-function strCells(conf, n = 8) {
-  const v = Number(conf);
-  return Array.from({ length: n }, (_, i) => ({
-    bg: i < Math.round(v * n) ? 'var(--ac)' : 'hsl(228,12%,14%)',
-  }));
-}
-
 export default function MemoryInspector() {
   const [facts, setFacts]         = useState([]);
   const [selected, setSelected]   = useState(null);
@@ -73,12 +66,15 @@ export default function MemoryInspector() {
     <div className="memory">
       <div className="mem-col">
         <div className="mem-hd">
-          <span className="mem-hd-num">02</span>
-          <span className="mem-hd-title">Memory</span>
-          <span className="mem-hd-meta">{facts.length} facts</span>
-          <button className="btn-cons" onClick={consolidate} disabled={consing}>
-            {consing ? 'running…' : '↻ consolidate'}
-          </button>
+          <div className="mem-hd-title">
+            memory
+            <span className="mem-hd-count">{facts.length}</span>
+          </div>
+          <div className="mem-hd-actions">
+            <button className="btn-cons" onClick={consolidate} disabled={consing}>
+              {consing ? 'running…' : '↻ consolidate'}
+            </button>
+          </div>
         </div>
 
         <div className="ingest-bar">
@@ -113,15 +109,6 @@ export default function MemoryInspector() {
           ))}
         </div>
 
-        {/* Table header */}
-        <div className="fact-thead">
-          <span>TYPE</span>
-          <span>CONTENT</span>
-          <span>STRENGTH</span>
-          <span>CONF</span>
-          <span>AGE</span>
-        </div>
-
         <div className="fact-list">
           {loading  && <p className="list-msg">Loading…</p>}
           {error    && <p className="list-err">{error}</p>}
@@ -132,50 +119,50 @@ export default function MemoryInspector() {
             <div
               key={f.fact_id}
               className={`fact-row${selected?.fact_id === f.fact_id ? ' sel' : ''}`}
+              style={{ '--conf': Number(f.confidence) }}
               onClick={() => select(f)}
             >
-              <span className={typeClass(f.type)}>{f.type}</span>
-              <span className="fact-content">{f.content}</span>
-              <div className="str-cells">
-                {strCells(f.confidence).map((c, i) => (
-                  <div key={i} className="str-cell" style={{ background: c.bg }} />
-                ))}
+              <div className="fact-line1">
+                <span className="fact-content">{f.content}</span>
               </div>
-              <span className="fact-conf">{Math.round(Number(f.confidence) * 100)}%</span>
-              <span className="fact-age">{ageFmt(f.last_seen)}</span>
+              <div className="fact-line2">
+                <span className={typeClass(f.type)}>{f.type}</span>
+                <span className="fact-conf-num">{Math.round(Number(f.confidence) * 100)}%</span>
+                <span className="fact-age">{ageFmt(f.last_seen)}</span>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       {!selected
-        ? <div className="mem-empty">Select a fact to inspect provenance</div>
+        ? <div className="mem-empty">select a fact to inspect provenance</div>
         : (
           <div className="mem-detail">
-            <span className={typeClass(selected.type).replace('fact-type', '').trim() + ' detail-type'} style={{ fontFamily: 'var(--fm)', fontSize: 'var(--tx)', letterSpacing: '0.14em' }}>
+            <span className={`detail-type-label ${typeClass(selected.type)}`}>
               {(selected.type || 'other').toUpperCase()}
             </span>
             <div className="detail-fact">{selected.content}</div>
 
-            <div className="detail-meta">
+            <div className="detail-defs">
               {[
-                { k: 'confidence', v: `${Math.round(Number(selected.confidence) * 100)}%` },
-                { k: 'last seen',  v: new Date(selected.last_seen).toLocaleDateString() },
-                { k: 'sources',    v: prov?.source_episodes?.length ?? '…' },
-                { k: 'fact id',    v: selected.fact_id.slice(0, 16) + '…' },
+                { k: 'CONFIDENCE', v: `${Math.round(Number(selected.confidence) * 100)}%` },
+                { k: 'LAST SEEN',  v: new Date(selected.last_seen).toLocaleDateString() },
+                { k: 'SOURCES',    v: prov ? (prov.source_episodes?.length ?? 0) : '…' },
+                { k: 'FACT ID',    v: selected.fact_id.slice(0, 16) + '…' },
               ].map(({ k, v }) => (
-                <div key={k} className="detail-row">
-                  <span className="detail-k">{k.toUpperCase()}</span>
-                  <span className="detail-v">{v}</span>
+                <div key={k} className="detail-def">
+                  <span className="def-k">{k}</span>
+                  <span className="def-v">{v}</span>
                 </div>
               ))}
             </div>
 
-            <div className="sec">
-              <span className="sec-lbl">PROVENANCE</span>
+            <div>
+              <div className="sec-label">PROVENANCE</div>
               {!prov && <p className="list-msg">Loading…</p>}
               {prov?.source_episodes?.length === 0 && <p className="list-msg">No source episodes recorded.</p>}
-              {prov?.source_episodes?.map((ep, i) => (
+              {prov?.source_episodes?.map(ep => (
                 <div key={ep.episode_id} className="ep-card">
                   <span className="ep-meta">
                     {new Date(ep.timestamp).toLocaleString()} · {ep.session_id.slice(0, 8)}

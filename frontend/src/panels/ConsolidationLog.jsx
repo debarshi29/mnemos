@@ -39,17 +39,6 @@ function buildLogLines(e) {
   return lines;
 }
 
-function sevenDayAgg(entries) {
-  const cutoff = Date.now() - 7 * 86400000;
-  const recent = entries.filter(e => new Date(e.timestamp).getTime() > cutoff);
-  return {
-    eps:  recent.reduce((s, e) => s + (e.episodes_processed ?? 0), 0),
-    mrg:  recent.reduce((s, e) => s + (e.facts_created ?? 0) + (e.facts_updated ?? 0), 0),
-    con:  recent.reduce((s, e) => s + (e.contradictions_resolved ?? 0), 0),
-    prn:  recent.reduce((s, e) => s + (e.facts_pruned ?? 0), 0),
-  };
-}
-
 export default function ConsolidationLog() {
   const [entries, setEntries]   = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -60,7 +49,14 @@ export default function ConsolidationLog() {
   const load = () => {
     setLoading(true); setError(null);
     getConsolidationLog()
-      .then(d => { setEntries(d); setLoading(false); })
+      .then(d => {
+        setEntries(d);
+        // Auto-expand the latest run
+        if (d.length > 0) {
+          setExpanded(prev => ({ ...prev, [d[0].run_id]: true }));
+        }
+        setLoading(false);
+      })
       .catch(e => { setError(e?.message || 'API unreachable'); setLoading(false); });
   };
   useEffect(() => { load(); }, []);
@@ -73,16 +69,13 @@ export default function ConsolidationLog() {
 
   const toggle = id => setExpanded(e => ({ ...e, [id]: !e[id] }));
 
-  const agg = sevenDayAgg(entries);
-
   return (
     <div className="sleep">
       <div className="sleep-hd">
-        <span className="sleep-hd-num">04</span>
-        <span className="sleep-hd-title">Sleep Cycle</span>
-        <span className="sleep-hd-meta">extract → dedupe → contradict → prune</span>
+        <span className="sleep-hd-title">sleep</span>
+        <span className="sleep-hd-sub">extract → dedupe → contradict → prune</span>
         <button className="btn-run" onClick={runNow} disabled={running}>
-          {running ? 'running…' : '▸ RUN NOW'}
+          {running ? 'running…' : '▸ run now'}
         </button>
       </div>
 
@@ -93,65 +86,43 @@ export default function ConsolidationLog() {
         <div className="sleep-empty">
           <span className="sleep-empty-hint">
             No runs yet.<br />
-            Hit "RUN NOW" to start the sleep cycle.
+            Hit "run now" to start the sleep cycle.
           </span>
         </div>
       )}
 
       {!loading && !error && entries.length > 0 && (
         <div className="sleep-body">
-          {/* 7-day aggregate */}
-          <div className="agg-grid">
-            <div className="agg-cell">
-              <span className="agg-n">{agg.eps}</span>
-              <span className="agg-l">EXTRACTED · 7D</span>
-            </div>
-            <div className="agg-cell">
-              <span className="agg-n">{agg.mrg}</span>
-              <span className="agg-l">MERGED · 7D</span>
-            </div>
-            <div className="agg-cell">
-              <span className="agg-n">{agg.con}</span>
-              <span className="agg-l">CONTRADICTIONS · 7D</span>
-            </div>
-            <div className="agg-cell">
-              <span className="agg-n">{agg.prn}</span>
-              <span className="agg-l">PRUNED · 7D</span>
-            </div>
-          </div>
-
-          {/* Run rows */}
-          <div className="run-list">
-            {entries.map(e => {
-              const open = !!expanded[e.run_id];
-              const lines = buildLogLines(e);
-              return (
-                <div key={e.run_id} className="run">
-                  <div className="run-hd" onClick={() => toggle(e.run_id)}>
-                    <span className="run-id">{e.run_id.slice(0, 8)}</span>
-                    <span className="run-when">{fmtWhen(e.timestamp)}</span>
-                    <div className="run-stats-inline">
-                      <span className="run-stat">ext <span>{e.episodes_processed ?? 0}</span></span>
-                      <span className="run-stat">mrg <span>{(e.facts_created ?? 0) + (e.facts_updated ?? 0)}</span></span>
-                      <span className={`run-stat${e.contradictions_resolved > 0 ? ' warn' : ''}`}>
-                        con <span>{e.contradictions_resolved ?? 0}</span>
-                      </span>
-                      <span className="run-stat">prn <span>{e.facts_pruned ?? 0}</span></span>
-                    </div>
-                    <span className="run-chev">{open ? '−' : '+'}</span>
+          {entries.map((e, idx) => {
+            const open = !!expanded[e.run_id];
+            const lines = buildLogLines(e);
+            const isLatest = idx === 0;
+            return (
+              <div key={e.run_id} className={`run${isLatest ? ' latest' : ''}`}>
+                <div className="run-hd" onClick={() => toggle(e.run_id)}>
+                  <span className="run-id">{e.run_id.slice(0, 8)}</span>
+                  <span className="run-when">{fmtWhen(e.timestamp)}</span>
+                  <div className="run-stats-inline">
+                    <span className="run-stat">ext <span>{e.episodes_processed ?? 0}</span></span>
+                    <span className="run-stat">mrg <span>{(e.facts_created ?? 0) + (e.facts_updated ?? 0)}</span></span>
+                    <span className={`run-stat${e.contradictions_resolved > 0 ? ' warn' : ''}`}>
+                      con <span>{e.contradictions_resolved ?? 0}</span>
+                    </span>
+                    <span className="run-stat">prn <span>{e.facts_pruned ?? 0}</span></span>
                   </div>
-
-                  {open && (
-                    <div className="run-log">
-                      {lines.map((l, i) => (
-                        <div key={i} className={`log-line log-${l.c}`}>{l.t}</div>
-                      ))}
-                    </div>
-                  )}
+                  <span className="run-chev">{open ? '−' : '+'}</span>
                 </div>
-              );
-            })}
-          </div>
+
+                {open && (
+                  <div className="run-log">
+                    {lines.map((l, i) => (
+                      <div key={i} className={`log-line log-${l.c}`}>{l.t}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
