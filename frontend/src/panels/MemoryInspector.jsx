@@ -4,7 +4,22 @@ import './MemoryInspector.css';
 
 const FILTERS = ['all', 'preference', 'skill', 'status', 'event', 'goal', 'other'];
 
-function confCls(c) { return c > 0.7 ? 'ch' : c > 0.4 ? 'cm' : 'cl'; }
+function typeClass(t) {
+  const known = ['preference', 'skill', 'status', 'event', 'goal'];
+  return `fact-type ft-${known.includes(t) ? t : 'other'}`;
+}
+
+function ageFmt(ts) {
+  const d = Math.floor((Date.now() - new Date(ts).getTime()) / 86400000);
+  return d === 0 ? 'today' : d === 1 ? '1d' : `${d}d`;
+}
+
+function strCells(conf, n = 8) {
+  const v = Number(conf);
+  return Array.from({ length: n }, (_, i) => ({
+    bg: i < Math.round(v * n) ? 'var(--ac)' : 'hsl(228,12%,14%)',
+  }));
+}
 
 export default function MemoryInspector() {
   const [facts, setFacts]         = useState([]);
@@ -58,21 +73,12 @@ export default function MemoryInspector() {
     <div className="memory">
       <div className="mem-col">
         <div className="mem-hd">
-          <div className="mem-hd-left">
-            <span className="mem-hd-title">Memory</span>
-            <span className="mem-hd-count">{facts.length} fact{facts.length !== 1 ? 's' : ''}</span>
-          </div>
+          <span className="mem-hd-num">02</span>
+          <span className="mem-hd-title">Memory</span>
+          <span className="mem-hd-meta">{facts.length} facts</span>
           <button className="btn-cons" onClick={consolidate} disabled={consing}>
             {consing ? 'running…' : '↻ consolidate'}
           </button>
-        </div>
-
-        <div className="mem-filters">
-          {FILTERS.map(f => (
-            <button key={f} className={`fpill${filter === f ? ' on' : ''}`} onClick={() => setFilter(f)}>
-              {f}
-            </button>
-          ))}
         </div>
 
         <div className="ingest-bar">
@@ -99,6 +105,23 @@ export default function MemoryInspector() {
           )}
         </div>
 
+        <div className="mem-filters">
+          {FILTERS.map(f => (
+            <button key={f} className={`fpill${filter === f ? ' on' : ''}`} onClick={() => setFilter(f)}>
+              {f}
+            </button>
+          ))}
+        </div>
+
+        {/* Table header */}
+        <div className="fact-thead">
+          <span>TYPE</span>
+          <span>CONTENT</span>
+          <span>STRENGTH</span>
+          <span>CONF</span>
+          <span>AGE</span>
+        </div>
+
         <div className="fact-list">
           {loading  && <p className="list-msg">Loading…</p>}
           {error    && <p className="list-err">{error}</p>}
@@ -111,47 +134,48 @@ export default function MemoryInspector() {
               className={`fact-row${selected?.fact_id === f.fact_id ? ' sel' : ''}`}
               onClick={() => select(f)}
             >
-              <div className="fact-content">{f.content}</div>
-              <div className="fact-meta">
-                <span className={`tbadge tp-${f.type || 'other'}`}>{f.type}</span>
-                <div className="conf-track">
-                  <div
-                    className={`conf-bar ${confCls(Number(f.confidence))}`}
-                    style={{ width: `${Math.round(Number(f.confidence) * 100)}%` }}
-                  />
-                </div>
-                <span className="conf-pct">{Math.round(Number(f.confidence) * 100)}%</span>
+              <span className={typeClass(f.type)}>{f.type}</span>
+              <span className="fact-content">{f.content}</span>
+              <div className="str-cells">
+                {strCells(f.confidence).map((c, i) => (
+                  <div key={i} className="str-cell" style={{ background: c.bg }} />
+                ))}
               </div>
+              <span className="fact-conf">{Math.round(Number(f.confidence) * 100)}%</span>
+              <span className="fact-age">{ageFmt(f.last_seen)}</span>
             </div>
           ))}
         </div>
       </div>
 
       {!selected
-        ? <div className="mem-empty">Select a fact to inspect its provenance</div>
+        ? <div className="mem-empty">Select a fact to inspect provenance</div>
         : (
           <div className="mem-detail">
+            <span className={typeClass(selected.type).replace('fact-type', '').trim() + ' detail-type'} style={{ fontFamily: 'var(--fm)', fontSize: 'var(--tx)', letterSpacing: '0.14em' }}>
+              {(selected.type || 'other').toUpperCase()}
+            </span>
             <div className="detail-fact">{selected.content}</div>
 
-            <div className="stats-row">
+            <div className="detail-meta">
               {[
-                { n: `${Math.round(Number(selected.confidence) * 100)}%`, l: 'confidence' },
-                { n: selected.type,                                        l: 'type'       },
-                { n: new Date(selected.last_seen).toLocaleDateString(),   l: 'last seen'  },
-                { n: prov?.source_episodes?.length ?? '…',                l: 'sources'    },
-              ].map(({ n, l }) => (
-                <div key={l} className="stat-cell">
-                  <span className="stat-n">{n}</span>
-                  <span className="stat-l">{l}</span>
+                { k: 'confidence', v: `${Math.round(Number(selected.confidence) * 100)}%` },
+                { k: 'last seen',  v: new Date(selected.last_seen).toLocaleDateString() },
+                { k: 'sources',    v: prov?.source_episodes?.length ?? '…' },
+                { k: 'fact id',    v: selected.fact_id.slice(0, 16) + '…' },
+              ].map(({ k, v }) => (
+                <div key={k} className="detail-row">
+                  <span className="detail-k">{k.toUpperCase()}</span>
+                  <span className="detail-v">{v}</span>
                 </div>
               ))}
             </div>
 
             <div className="sec">
-              <span className="sec-lbl">Source episodes</span>
+              <span className="sec-lbl">PROVENANCE</span>
               {!prov && <p className="list-msg">Loading…</p>}
               {prov?.source_episodes?.length === 0 && <p className="list-msg">No source episodes recorded.</p>}
-              {prov?.source_episodes?.map(ep => (
+              {prov?.source_episodes?.map((ep, i) => (
                 <div key={ep.episode_id} className="ep-card">
                   <span className="ep-meta">
                     {new Date(ep.timestamp).toLocaleString()} · {ep.session_id.slice(0, 8)}
@@ -159,11 +183,6 @@ export default function MemoryInspector() {
                   <div className="ep-text">{ep.text}</div>
                 </div>
               ))}
-            </div>
-
-            <div className="sec">
-              <span className="sec-lbl">Fact ID</span>
-              <span className="fact-id">{selected.fact_id}</span>
             </div>
           </div>
         )
