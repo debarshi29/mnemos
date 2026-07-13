@@ -1,102 +1,18 @@
 import { useState, useEffect } from 'react';
 import { getConsolidationLog, triggerConsolidate } from '../api';
-
-const MONO = { fontFamily: "'IBM Plex Mono', monospace" };
-
-const DETAIL_COLOR = {
-  contradiction_resolved: '#f59e0b',
-  pruned: '#374151',
-  default: '#34d399',
-};
-
-const S = {
-  root: {
-    display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0,
-    background: '#0f1117', overflowY: 'auto',
-  },
-  header: {
-    padding: '1.25rem 2rem 1rem', borderBottom: '1px solid #1e2435',
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    background: '#111520', position: 'sticky', top: 0, zIndex: 1,
-  },
-  title: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.05rem', color: '#e2e8f0' },
-  runBtn: (running) => ({
-    ...MONO, fontSize: '0.6rem',
-    textTransform: 'uppercase', letterSpacing: '0.12em',
-    background: running ? 'transparent' : '#f59e0b',
-    color: running ? '#2d3748' : '#0f1117',
-    border: running ? '1px solid #252d3d' : 'none',
-    borderRadius: 99, padding: '0.3rem 0.85rem', cursor: running ? 'default' : 'pointer',
-    transition: 'all 0.13s',
-  }),
-  list: { padding: '1.25rem 2rem', display: 'flex', flexDirection: 'column', gap: '1rem' },
-  card: {
-    background: '#111520', border: '1px solid #1e2435', borderRadius: 14,
-    overflow: 'hidden', transition: 'border-color 0.15s',
-  },
-  cardHead: {
-    padding: '0.85rem 1.25rem',
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  },
-  runId: { ...MONO, fontSize: '0.62rem', color: '#2d3748' },
-  ts: { ...MONO, fontSize: '0.6rem', color: '#252d3d' },
-  statsRow: {
-    display: 'flex', gap: '0', borderTop: '1px solid #1e2435',
-    borderBottom: '1px solid #1e2435',
-  },
-  statCell: (last) => ({
-    flex: 1, padding: '0.8rem 0.5rem', textAlign: 'center',
-    borderRight: last ? 'none' : '1px solid #1e2435',
-    display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'center',
-  }),
-  statVal: { fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: '1.3rem', color: '#f59e0b' },
-  statLabel: { ...MONO, fontSize: '0.52rem', color: '#2d3748', textTransform: 'uppercase', letterSpacing: '0.1em' },
-  vineWrap: { padding: '0 1.25rem' },
-  vine: (pct) => ({
-    height: 2, background: `linear-gradient(90deg, #1e2435 ${100 - pct}%, #f59e0b 100%)`,
-    borderRadius: 99, margin: '0.65rem 0',
-    transition: 'all 0.4s ease',
-  }),
-  toggleBtn: (open) => ({
-    ...MONO, fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.1em',
-    padding: '0.5rem 1.25rem 0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
-    cursor: 'pointer', color: open ? '#b45309' : '#2d3748',
-    background: 'none', border: 'none', width: '100%', textAlign: 'left',
-    transition: 'color 0.12s',
-  }),
-  details: { padding: '0 1.25rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' },
-  detailItem: (type) => ({
-    background: '#0f1117', borderRadius: 8, padding: '0.55rem 0.85rem',
-    fontSize: '0.8rem', lineHeight: 1.5, color: '#64748b',
-    borderLeft: `3px solid ${DETAIL_COLOR[type] || DETAIL_COLOR.default}`,
-    display: 'flex', flexDirection: 'column', gap: '0.2rem',
-  }),
-  detailType: (type) => ({
-    ...MONO, fontSize: '0.54rem', textTransform: 'uppercase', letterSpacing: '0.1em',
-    color: DETAIL_COLOR[type] || DETAIL_COLOR.default,
-  }),
-
-  empty: {
-    flex: 1, display: 'flex', flexDirection: 'column',
-    alignItems: 'center', justifyContent: 'center',
-    color: '#2d3748', padding: '3rem', textAlign: 'center', gap: '0.5rem',
-  },
-  emptyHint: { ...MONO, fontSize: '0.65rem', lineHeight: 1.7 },
-};
+import './ConsolidationLog.css';
 
 const STATS = [
-  { key: 'episodes_processed',     label: 'episodes' },
-  { key: 'facts_created',          label: 'created'  },
-  { key: 'facts_updated',          label: 'updated'  },
+  { key: 'episodes_processed',      label: 'episodes' },
+  { key: 'facts_created',           label: 'created'  },
+  { key: 'facts_updated',           label: 'updated'  },
   { key: 'contradictions_resolved', label: 'resolved' },
-  { key: 'facts_pruned',           label: 'pruned'   },
+  { key: 'facts_pruned',            label: 'pruned'   },
 ];
 
 function fmtTs(ts) {
   const d = new Date(ts);
-  const date = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return `${date} · ${time}`;
+  return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
 export default function ConsolidationLog() {
@@ -124,81 +40,83 @@ export default function ConsolidationLog() {
   const toggle = (id) => setExpanded(e => ({ ...e, [id]: !e[id] }));
 
   return (
-    <div style={S.root}>
-      <div style={S.header}>
-        <span style={S.title}>Sleep Cycle</span>
-        <button style={S.runBtn(running)} onClick={runNow} disabled={running}>
+    <div className="sleep-cycle">
+      <div className="cycle-header">
+        <span className="cycle-title">Sleep Cycle</span>
+        <button className="btn-run" onClick={runNow} disabled={running}>
           {running ? 'running…' : '↻ run now'}
         </button>
       </div>
 
-      {loading && <p style={{ padding: '1.5rem 2rem', color: '#2d3748', fontStyle: 'italic', fontSize: '0.85rem' }}>Loading…</p>}
-
-      {error && (
-        <p style={{ padding: '1rem 2rem', color: '#f87171', fontSize: '0.78rem', fontFamily: "'IBM Plex Mono', monospace" }}>
-          ✗ {error}
-        </p>
-      )}
+      {loading && <p className="cycle-loading">Loading…</p>}
+      {error   && <p className="cycle-error">{error}</p>}
 
       {!loading && !error && entries.length === 0 && (
-        <div style={S.empty}>
-          <span style={{ fontSize: '1.4rem', opacity: 0.3 }}>◉</span>
-          <span style={S.emptyHint}>
+        <div className="cycle-empty">
+          <span className="cycle-empty-icon">◉</span>
+          <span className="cycle-empty-text">
             No consolidation runs yet.<br />
             Hit "run now" to start the sleep cycle.
           </span>
         </div>
       )}
 
-      <div style={S.list}>
+      <div className="cycle-list">
         {entries.map(e => {
-          const total = e.facts_created + e.facts_updated;
-          const pct = e.episodes_processed > 0 ? Math.min((total / e.episodes_processed) * 100, 100) : 0;
-          const isOpen = expanded[e.run_id];
+          const total = (e.facts_created ?? 0) + (e.facts_updated ?? 0);
+          const pct = e.episodes_processed > 0
+            ? Math.min((total / e.episodes_processed) * 100, 100)
+            : 0;
+          const isOpen = !!expanded[e.run_id];
+
           return (
-            <div
-              key={e.run_id}
-              style={S.card}
-              onMouseEnter={el => el.currentTarget.style.borderColor = '#252d3d'}
-              onMouseLeave={el => el.currentTarget.style.borderColor = '#1e2435'}
-            >
-              <div style={S.cardHead}>
-                <span style={S.runId}>run · {e.run_id.slice(0, 8)}</span>
-                <span style={S.ts}>{fmtTs(e.timestamp)}</span>
+            <div key={e.run_id} className="run-card">
+              <div className="run-head">
+                <span className="run-id">run · {e.run_id.slice(0, 8)}</span>
+                <span className="run-ts">{fmtTs(e.timestamp)}</span>
               </div>
 
-              <div style={S.statsRow}>
-                {STATS.map((s, i) => (
-                  <div key={s.key} style={S.statCell(i === STATS.length - 1)}>
-                    <span style={S.statVal}>{e[s.key] ?? 0}</span>
-                    <span style={S.statLabel}>{s.label}</span>
+              <div className="run-stats">
+                {STATS.map(s => (
+                  <div key={s.key} className="stat-cell">
+                    <span className="stat-num">{e[s.key] ?? 0}</span>
+                    <span className="stat-lbl">{s.label}</span>
                   </div>
                 ))}
               </div>
 
-              <div style={S.vineWrap}>
-                <div style={S.vine(pct)} />
+              <div className="run-bar-wrap">
+                <div className="run-bar">
+                  <div className="run-bar-fill" style={{ width: `${pct}%` }} />
+                </div>
               </div>
 
               {e.details?.length > 0 && (
                 <>
-                  <button style={S.toggleBtn(isOpen)} onClick={() => toggle(e.run_id)}>
+                  <button
+                    className={`run-toggle${isOpen ? ' open' : ''}`}
+                    onClick={() => toggle(e.run_id)}
+                  >
                     <span>{isOpen ? '▾' : '▸'}</span>
                     {e.details.length} event{e.details.length !== 1 ? 's' : ''}
                   </button>
                   {isOpen && (
-                    <div style={S.details}>
+                    <div className="run-events">
                       {e.details.map((d, i) => (
-                        <div key={i} style={S.detailItem(d.type)}>
-                          <span style={S.detailType(d.type)}>{d.type.replace(/_/g, ' ')}</span>
+                        <div key={i} className={`event-item type-${d.type}`}>
+                          <span className="event-type">{d.type.replace(/_/g, ' ')}</span>
                           {d.type === 'contradiction_resolved' && (
                             <span>
-                              kept <em>"{d.winner_content?.slice(0, 70)}"</em>
-                              {d.loser_content ? <> · dropped <em>"{d.loser_content.slice(0, 70)}"</em></> : null}
+                              kept "{d.winner_content?.slice(0, 80)}"
+                              {d.loser_content
+                                ? <> · dropped "{d.loser_content.slice(0, 80)}"</>
+                                : null}
                             </span>
                           )}
                           {d.type === 'pruned' && (
-                            <span>"{d.content?.slice(0, 100)}" (conf {d.confidence?.toFixed(2)})</span>
+                            <span>
+                              "{d.content?.slice(0, 100)}" — conf {d.confidence?.toFixed(2)}
+                            </span>
                           )}
                         </div>
                       ))}

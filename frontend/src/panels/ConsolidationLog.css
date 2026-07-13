@@ -1,0 +1,197 @@
+.sleep-cycle {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.cycle-header {
+  padding: 16px 28px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.cycle-title { font-size: 13.5px; font-weight: 600; }
+
+.btn-run {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 99px;
+  background: var(--accent);
+  color: #000;
+  transition: background 0.12s;
+}
+.btn-run:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-run:disabled {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-3);
+}
+
+.cycle-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Run card ── */
+.run-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.run-card:hover { border-color: var(--border-hover); }
+
+.run-head {
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.run-id {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+.run-ts {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+
+/* ── Stats row ── */
+.run-stats {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.stat-cell {
+  flex: 1;
+  padding: 12px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  border-right: 1px solid var(--border);
+}
+.stat-cell:last-child { border-right: none; }
+.stat-num {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.1;
+}
+.stat-lbl {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+
+/* ── Activity bar ── */
+.run-bar-wrap { padding: 0 16px; }
+.run-bar {
+  height: 2px;
+  border-radius: 99px;
+  margin: 10px 0;
+  background: var(--border);
+  overflow: hidden;
+}
+.run-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+/* ── Events toggle ── */
+.run-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 10px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-3);
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid var(--border);
+  transition: color 0.12s;
+}
+.run-toggle:hover { color: var(--text-2); }
+.run-toggle.open  { color: var(--accent); }
+
+.run-events {
+  padding: 0 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.event-item {
+  background: var(--bg);
+  border-radius: var(--r);
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-2);
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.event-item.type-contradiction_resolved { border-left-color: var(--accent); }
+.event-item.type-pruned                 { border-left-color: var(--text-3); }
+
+.event-type {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.event-item.type-contradiction_resolved .event-type { color: var(--accent); }
+.event-item.type-pruned                 .event-type { color: var(--text-3); }
+
+/* ── Empty / loading ── */
+.cycle-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 48px;
+}
+.cycle-empty-icon { font-size: 28px; opacity: 0.12; }
+.cycle-empty-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.9;
+}
+.cycle-loading {
+  padding: 20px 28px;
+  font-size: 13px;
+  color: var(--text-3);
+  font-style: italic;
+}
+.cycle-error {
+  padding: 14px 28px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--red);
+}
