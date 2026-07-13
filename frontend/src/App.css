@@ -1,81 +1,74 @@
 .app {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   overflow: hidden;
 }
 
-/* ── Sidebar ── */
-.sidebar {
-  width: var(--sidebar-w);
-  flex-shrink: 0;
+/* ── Top bar ── */
+.bar {
+  height: 44px;
   display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-}
-
-.sidebar-brand {
-  padding: 20px 18px 18px;
-  border-bottom: 1px solid var(--border);
+  align-items: stretch;
+  border-bottom: 1px solid var(--b1);
+  background: var(--s1);
   flex-shrink: 0;
+  padding: 0 24px;
 }
 
-.sidebar-wordmark {
-  font-size: 15px;
-  font-weight: 650;
-  letter-spacing: -0.03em;
-  color: var(--text);
-  display: block;
-  line-height: 1;
-}
-.sidebar-wordmark em {
-  font-style: normal;
-  color: var(--accent);
-}
-
-.sidebar-nav {
-  padding: 6px 0;
-  flex: 1;
-}
-
-.nav-btn {
+.bar-logo {
+  font-family: var(--fm);
+  font-size: var(--tm);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--t1);
   display: flex;
   align-items: center;
-  width: 100%;
-  padding: 9px 18px;
-  font-size: 13.5px;
-  color: var(--text-2);
-  border-left: 2px solid transparent;
-  border-radius: 0;
-  text-align: left;
-  transition: color 0.1s, background 0.1s, border-color 0.1s;
-  letter-spacing: -0.01em;
-}
-.nav-btn:hover {
-  color: var(--text);
-  background: rgba(255,255,255,0.03);
-}
-.nav-btn.active {
-  color: var(--text);
-  border-left-color: var(--accent);
-  background: rgba(240,160,32,0.06);
-}
-
-.sidebar-footer {
-  padding: 14px 18px;
-  border-top: 1px solid var(--border);
+  margin-right: 24px;
+  user-select: none;
   flex-shrink: 0;
 }
-.sidebar-ver {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text-3);
+.bar-logo i { font-style: normal; color: var(--ac); }
+
+.bar-div {
+  width: 1px;
+  background: var(--b1);
+  margin: 10px 20px 10px 0;
+  flex-shrink: 0;
 }
 
-/* ── Main panel ── */
+/* Tabs sit flush on the bottom border of the bar */
+.tab {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-size: var(--ts);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--t3);
+  position: relative;
+  border: none;
+  background: none;
+  transition: color 0.1s;
+}
+.tab:hover { color: var(--t2); }
+.tab.on   { color: var(--t1); }
+
+/* Underline indicator — flush with the bar's bottom border */
+.tab.on::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  background: var(--ac);
+  border-radius: 2px 2px 0 0;
+}
+
 .panel {
   flex: 1;
-  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
