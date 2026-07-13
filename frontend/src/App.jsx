@@ -8,20 +8,20 @@ import './App.css';
 const SESSION_ID = crypto.randomUUID();
 
 const TABS = [
-  { id: 'chat',   num: '01', label: 'Chat'    },
-  { id: 'memory', num: '02', label: 'Memory'  },
-  { id: 'goals',  num: '03', label: 'Roadmap' },
-  { id: 'log',    num: '04', label: 'Sleep'   },
+  { id: 'chat',   label: 'chat'    },
+  { id: 'memory', label: 'memory'  },
+  { id: 'goals',  label: 'roadmap' },
+  { id: 'log',    label: 'sleep'   },
 ];
 
-// Deterministic strength-field bars — stable across renders
-const FIELD = Array.from({ length: 34 }, (_, i) => {
+// Deterministic bars — no Math.random (stable across renders)
+const FIELD = Array.from({ length: 28 }, (_, i) => {
   const v = Math.abs(Math.sin(i * 12.9898 + 0.5) * 43758.5453) % 1;
   return {
-    h: Math.round(14 + v * 82),
+    h: Math.round(12 + v * 78),
     bg: i % 11 === 3
       ? 'var(--am)'
-      : `hsla(228,76%,72%,${(0.2 + v * 0.6).toFixed(2)})`,
+      : `hsla(228,76%,72%,${(0.18 + v * 0.55).toFixed(2)})`,
   };
 });
 
@@ -32,8 +32,8 @@ export default function App() {
     <div className="shell">
       <aside className="rail">
         <div className="rail-logo">
-          <div className="rail-logotype">MNEMOS<span className="rail-dot">_</span></div>
-          <div className="rail-sub">agentic memory · v0.9</div>
+          <div className="rail-wordmark">mnemos<em>_</em></div>
+          <div className="rail-tagline">agentic memory</div>
         </div>
 
         <nav className="rail-nav">
@@ -43,27 +43,21 @@ export default function App() {
               className={`rnav-btn${tab === t.id ? ' on' : ''}`}
               onClick={() => setTab(t.id)}
             >
-              <span className="rnav-num">{t.num}</span>
-              <span className="rnav-label">{t.label}</span>
+              <span className="rnav-indicator">{tab === t.id ? '›' : ' '}</span>
+              {t.label}
             </button>
           ))}
         </nav>
 
         <div className="rail-foot">
           <div>
-            <div className="sf-lbl">STRENGTH FIELD</div>
+            <div className="sf-label">STRENGTH</div>
             <div className="sf-bars">
               {FIELD.map((b, i) => (
-                <div
-                  key={i}
-                  className="sf-bar"
-                  style={{ height: b.h + '%', background: b.bg }}
-                />
+                <div key={i} className="sf-bar" style={{ height: b.h + '%', background: b.bg }} />
               ))}
             </div>
-            <div className="sf-caption">
-              — facts · μ <span className="sf-em">—</span>
-            </div>
+            <div className="sf-meta">— facts · μ <em>—</em></div>
           </div>
           <div className="sys-rows">
             <div className="sys-row">
@@ -88,7 +82,6 @@ export default function App() {
       <footer className="statusbar">
         <span>sqlite-wal <span className="sb-val ok">ok</span></span>
         <span>qdrant <span className="sb-val ok">ok</span></span>
-        <span>minilm-l6 · 384d</span>
         <span className="sb-push">
           <span>t½ <span className="sb-val">168h</span></span>
           <span>sim ⩾ <span className="sb-val">0.85</span></span>
