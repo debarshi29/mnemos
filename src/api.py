@@ -268,10 +268,11 @@ def ingest_source(req: IngestRequest):
             headers["Authorization"] = f"Bearer {token}"
         try:
             meta = _httpx.get(f"https://api.github.com/repos/{owner}/{repo}",
-                               headers=headers, timeout=10).raise_for_status().json()
+                               headers=headers, timeout=10,
+                               follow_redirects=True).raise_for_status().json()
             readme_r = _httpx.get(f"https://api.github.com/repos/{owner}/{repo}/readme",
                                    headers={**headers, "Accept": "application/vnd.github.raw+json"},
-                                   timeout=10)
+                                   timeout=10, follow_redirects=True)
             readme = textwrap.shorten(readme_r.text, 4000, placeholder=" …") \
                 if readme_r.status_code == 200 else "No README."
         except Exception as e:
