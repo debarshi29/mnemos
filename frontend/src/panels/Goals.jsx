@@ -2,16 +2,12 @@ import { useState, useEffect } from 'react';
 import { getGoals, updateGoalStatus } from '../api';
 import './Goals.css';
 
-const STATUS_LABELS = {
-  not_started: 'todo',
-  in_progress:  'doing',
-  done:         'done',
-};
+const LABELS = { not_started: 'todo', in_progress: 'doing', done: 'done' };
 
 export default function Goals() {
-  const [goals, setGoals] = useState([]);
+  const [goals, setGoals]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError]   = useState(null);
 
   const load = () => {
     setLoading(true); setError(null);
@@ -19,13 +15,12 @@ export default function Goals() {
       .then(g => { setGoals(g); setLoading(false); })
       .catch(e => { setError(e?.message || 'API unreachable'); setLoading(false); });
   };
-
   useEffect(() => { load(); }, []);
 
-  const changeStatus = async (goalId, status) => {
+  const setStatus = async (id, status) => {
     try {
-      await updateGoalStatus(goalId, status);
-      setGoals(gs => gs.map(g => g.goal_id === goalId ? { ...g, status } : g));
+      await updateGoalStatus(id, status);
+      setGoals(gs => gs.map(g => g.goal_id === id ? { ...g, status } : g));
     } catch {}
   };
 
@@ -34,35 +29,25 @@ export default function Goals() {
     return acc;
   }, {});
 
-  const topicProgress = (phases) => {
-    const done = phases.filter(p => p.status === 'done').length;
-    return {
-      done,
-      total: phases.length,
-      pct: phases.length ? Math.round((done / phases.length) * 100) : 0,
-    };
-  };
-
-  const doneCount = goals.filter(g => g.status === 'done').length;
+  const done  = goals.filter(g => g.status === 'done').length;
 
   return (
     <div className="goals">
-      <div className="goals-header">
+      <div className="goals-bar">
         <span className="goals-title">Roadmap</span>
         {goals.length > 0 && (
-          <span className="goals-sub">{doneCount}/{goals.length} phases done</span>
+          <span className="goals-sub">{done}/{goals.length} done</span>
         )}
       </div>
 
-      {loading && <p className="goals-loading">Loading…</p>}
-      {error   && <p className="goals-error">{error}</p>}
+      {loading && <p className="goals-load">Loading…</p>}
+      {error   && <p className="goals-err">{error}</p>}
 
       {!loading && !error && goals.length === 0 && (
         <div className="goals-empty">
-          <span className="goals-empty-icon">◈</span>
-          <span className="goals-empty-text">
+          <span className="goals-empty-hint">
             No roadmap yet.<br />
-            In Chat, click "+ roadmap",<br />
+            In Chat, click "roadmap",<br />
             enter a topic and your background.
           </span>
         </div>
@@ -72,47 +57,45 @@ export default function Goals() {
         <div className="goals-body">
           {Object.entries(byTopic).map(([topic, phases]) => {
             const sorted = [...phases].sort((a, b) => a.phase_index - b.phase_index);
-            const prog = topicProgress(sorted);
+            const pct = sorted.length
+              ? Math.round((sorted.filter(p => p.status === 'done').length / sorted.length) * 100)
+              : 0;
             return (
-              <div key={topic} className="topic-group">
-                <div className="topic-header">
+              <div key={topic} className="topic">
+                <div className="topic-hd">
                   <span className="topic-name">{topic}</span>
                   <div className="prog-track">
-                    <div className="prog-fill" style={{ width: `${prog.pct}%` }} />
+                    <div className="prog-fill" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className="prog-label">{prog.done}/{prog.total}</span>
+                  <span className="prog-lbl">
+                    {sorted.filter(p => p.status === 'done').length}/{sorted.length}
+                  </span>
                 </div>
 
                 <div className="phases">
                   {sorted.map(g => (
-                    <div key={g.goal_id} className={`phase-card ${g.status}`}>
-                      <span className="phase-num">{g.phase_index + 1}.</span>
+                    <div key={g.goal_id} className={`phase ${g.status}`}>
+                      <span className="phase-n">{g.phase_index + 1}.</span>
                       <div className="phase-body">
                         <div className="phase-text">{g.phase_content}</div>
                         {g.metadata?.resources?.length > 0 && (
                           <div className="phase-links">
                             {g.metadata.resources.slice(0, 3).map((r, i) => (
-                              <a
-                                key={i}
-                                href={r}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="phase-link"
-                              >
+                              <a key={i} href={r} target="_blank" rel="noreferrer" className="phase-link">
                                 ↗ {r}
                               </a>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div className="status-pills">
+                      <div className="status-ctrl">
                         {['not_started', 'in_progress', 'done'].map(s => (
                           <button
                             key={s}
-                            className={`spill s-${s}${g.status === s ? ' on' : ''}`}
-                            onClick={() => changeStatus(g.goal_id, s)}
+                            className={`sctl-btn s-${s}${g.status === s ? ' on' : ''}`}
+                            onClick={() => setStatus(g.goal_id, s)}
                           >
-                            {STATUS_LABELS[s]}
+                            {LABELS[s]}
                           </button>
                         ))}
                       </div>
