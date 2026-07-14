@@ -1,119 +1,85 @@
-/* ── Shell: 160px nav | content / 28px status ── */
+/* ── Shell: topbar(44) | content | statusbar(30) ── */
 .shell {
   display: grid;
-  grid-template-columns: 160px 1fr;
-  grid-template-rows: 1fr 28px;
+  grid-template-rows: 44px 1fr 30px;
   height: 100vh;
   min-height: 560px;
   overflow: hidden;
   background: var(--bg);
 }
 
-/* ── NAV RAIL ── */
-.rail {
-  grid-row: 1 / 3;
+/* ── TOP NAV ── */
+.topbar {
   display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--b1);
+  align-items: stretch;
+  padding: 0 0 0 22px;
+  border-bottom: 2px solid var(--b2);
   background: var(--s1);
 }
 
-.rail-logo {
-  padding: 20px 16px 16px;
-  border-bottom: 1px solid var(--b1);
-}
-.rail-wordmark {
+.tb-logo {
   font-family: var(--fm);
   font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.04em;
   color: var(--t1);
-}
-.rail-wordmark em { color: var(--am); font-style: normal; }
-.rail-tagline {
-  font-family: var(--fm);
-  font-size: var(--tx);
-  color: var(--t4);
-  margin-top: 3px;
-}
-
-/* Nav items — lowercase, no numbers, differentiated by weight + color only */
-.rail-nav {
-  display: flex;
-  flex-direction: column;
-  padding: 10px 0;
-}
-.rnav-btn {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 16px;
-  width: 100%;
-  text-align: left;
-  font-size: var(--tm);
-  font-weight: 400;
-  color: var(--t3);
-  transition: color 0.1s, background 0.1s;
+  margin-right: 8px;
+  flex-shrink: 0;
+  user-select: none;
 }
-.rnav-btn:hover { color: var(--t2); background: var(--s2); }
-.rnav-btn.on { color: var(--t1); font-weight: 600; }
+.tb-logo em { color: var(--am); font-style: normal; }
 
-/* › indicator — flush left, not a border */
-.rnav-indicator {
-  font-family: var(--fm);
-  font-size: 11px;
-  color: var(--ac);
-  width: 8px;
+/* Separator between logo and tabs */
+.tb-sep {
+  width: 1px;
+  background: var(--b1);
+  margin: 10px 16px;
   flex-shrink: 0;
 }
 
-/* ── Sidebar bottom ── */
-.rail-foot {
-  margin-top: auto;
-  padding: 14px 16px;
-  border-top: 1px solid var(--b1);
+.tb-nav {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: stretch;
+  flex: 1;
+  gap: 0;
 }
 
-/* Strength field */
-.sf-label {
+.tb-tab {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
   font-family: var(--fm);
-  font-size: var(--tx);
-  color: var(--t4);
-  margin-bottom: 5px;
+  font-size: var(--ts);
   letter-spacing: 0.08em;
+  color: var(--t3);
+  border-right: 1px solid var(--b1);
+  white-space: nowrap;
+  transition: color 0.1s;
 }
-.sf-bars {
+.tb-tab:hover { color: var(--t2); }
+.tb-tab.on    { color: var(--ac); }
+
+.tb-end {
   display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 26px;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  margin-left: auto;
+  border-left: 1px solid var(--b1);
 }
-.sf-bar { width: 3px; border-radius: 1px 1px 0 0; }
-.sf-meta {
+.tb-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-family: var(--fm);
   font-size: var(--tx);
   color: var(--t4);
-  margin-top: 4px;
 }
-.sf-meta em { color: var(--am); font-style: normal; }
+.tb-dot { width: 5px; height: 5px; background: var(--gr); flex-shrink: 0; }
 
-/* System status */
-.sys-rows { display: flex; flex-direction: column; gap: 4px; }
-.sys-row {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--fm);
-  font-size: var(--tx);
-}
-.sys-k { color: var(--t4); }
-.sys-v { color: var(--t2); }
-.sys-ok { display: flex; align-items: center; gap: 4px; color: var(--gr); }
-.sys-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gr); }
-
-/* ── CONTENT AREA ── */
+/* ── CONTENT ── */
 .main {
   min-width: 0;
   min-height: 0;
@@ -128,13 +94,14 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 0 20px;
+  padding: 0 22px;
   border-top: 1px solid var(--b1);
   background: var(--s1);
   font-family: var(--fm);
   font-size: var(--tx);
   color: var(--t4);
+  letter-spacing: 0.03em;
 }
-.sb-val { color: var(--am); }
+.sb-val { color: var(--am); font-variant-numeric: tabular-nums; }
 .sb-val.ok { color: var(--gr); }
 .sb-push { margin-left: auto; display: flex; gap: 16px; }

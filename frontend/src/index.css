@@ -3,46 +3,40 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* ── Surfaces — pitch black with a barely-perceptible blue undertone ── */
-  --bg:  hsl(228,10%,4%);     /* #090912 — pitch black */
-  --s1:  hsl(228,10%,5.5%);   /* sidebar / raised panels */
-  --s2:  hsl(228,8%,7.5%);    /* inputs, hover rows */
-  --s3:  hsl(228,8%,10%);     /* selected rows */
+  --bg:  hsl(0,0%,2%);
+  --s1:  hsl(0,0%,5%);
+  --s2:  hsl(0,0%,8%);
+  --s3:  hsl(0,0%,12%);
 
-  /* ── Borders — intentionally dim ── */
-  --b1:  hsl(228,8%,12%);
-  --b2:  hsl(228,8%,18%);
-  --b3:  hsl(228,8%,26%);
+  --b1:  hsl(0,0%,14%);
+  --b2:  hsl(0,0%,24%);
+  --b3:  hsl(0,0%,38%);
 
-  /* ── Text ── */
-  --t1:  hsl(228,16%,90%);
-  --t2:  hsl(228,8%,64%);
-  --t3:  hsl(228,6%,44%);
-  --t4:  hsl(228,4%,28%);
+  --t1:  hsl(0,0%,95%);
+  --t2:  hsl(0,0%,68%);
+  --t3:  hsl(0,0%,46%);
+  --t4:  hsl(0,0%,28%);
 
-  /* ── Accent — two colors, used sparingly ── */
-  --ac:  hsl(228,76%,72%);    /* periwinkle — interactive only */
-  --am:  hsl(40,88%,57%);     /* amber — data values only */
-  --gr:  hsl(150,52%,52%);    /* green — status only */
-  --re:  hsl(4,70%,65%);      /* red — errors only */
+  --ac:  hsl(180,100%,50%);
+  --am:  hsl(24,100%,58%);
+  --gr:  hsl(140,80%,48%);
+  --re:  hsl(0,90%,60%);
 
-  --ac-d: hsla(228,76%,72%,0.08);
-  --am-d: hsla(40,88%,57%,0.08);
-  --gr-d: hsla(150,52%,52%,0.08);
+  --ac-d: hsla(180,100%,50%,0.08);
+  --am-d: hsla(24,100%,58%,0.1);
+  --gr-d: hsla(140,80%,48%,0.08);
 
-  /* ── Typography ── */
   --f:  'IBM Plex Sans', system-ui, sans-serif;
   --fm: 'IBM Plex Mono', monospace;
 
-  /* ── Scale — generous body for readability ── */
   --tx:  11px;
   --ts:  12px;
   --tm:  13px;
   --tl:  14px;
-  --txl: 16px;
+  --txl: 15px;
 
-  --r:  3px;
-  --rl: 6px;
+  --r:  0px;
+  --rl: 0px;
 }
 
 html, body, #root {
@@ -55,18 +49,20 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: var(--ac); color: hsl(228,10%,4%); }
+::selection { background: var(--ac); color: hsl(0,0%,2%); }
 
-::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--b2); }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--b3); }
 
 button { cursor: pointer; border: none; background: none; font-family: inherit; color: inherit; font-size: inherit; }
-button:disabled { opacity: 0.28; cursor: not-allowed; }
+button:disabled { opacity: 0.3; cursor: not-allowed; }
 input, textarea, select { font-family: inherit; color: var(--t1); background: transparent; border: none; outline: none; }
 input::placeholder, textarea::placeholder { color: var(--t4); }
 a { color: var(--ac); text-decoration: none; }
-a:hover { color: hsl(228,84%,82%); }
+a:hover { color: hsl(180,100%,72%); }
 
-@keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+@keyframes appear  { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes fadein  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes blink   { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
