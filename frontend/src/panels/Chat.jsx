@@ -1,9 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { streamMessage, createRoadmap } from '../api';
+import { streamMessage, createRoadmap, getFacts } from '../api';
 import './Chat.css';
 
 function fmt(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function confBar(conf) {
+  const c = Math.max(0, Math.min(1, Number(conf)));
+  const s = Math.round(c * 100);
+  const l = Math.round(18 + c * 32);
+  return `hsl(180,${s}%,${l}%)`;
 }
 
 export default function Chat({ sessionId }) {
@@ -13,15 +20,27 @@ export default function Chat({ sessionId }) {
     memoryUsed: [],
     ts: Date.now(),
   }]);
-  const [input, setInput]     = useState('');
-  const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState({}); // which message indexes have recall expanded
+  const [input, setInput]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [expanded, setExpanded] = useState({});
   const [showPlan, setShowPlan]   = useState(false);
   const [planTopic, setPlanTopic] = useState('');
   const [planBg, setPlanBg]       = useState('');
   const [planBusy, setPlanBusy]   = useState(false);
+  const [ctxFacts, setCtxFacts]   = useState([]);
+  const [ctxOpen, setCtxOpen]     = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState(null);
   const bottomRef   = useRef(null);
   const textareaRef = useRef(null);
+
+  useEffect(() => {
+    getFacts()
+      .then(facts => {
+        const sorted = [...facts].sort((a, b) => b.confidence - a.confidence);
+        setCtxFacts(sorted.slice(0, 8));
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -29,7 +48,14 @@ export default function Chat({ sessionId }) {
 
   const autoResize = el => {
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  };
+
+  const copyMsg = (idx, text) => {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 1400);
+    });
   };
 
   const send = useCallback(async () => {
@@ -104,69 +130,118 @@ export default function Chat({ sessionId }) {
   return (
     <div className="chat">
       <div className="thread-wrap">
-        <div className="thread">
-          {messages.map((m, i) => {
-            const hasRecall = m.role === 'assistant' && m.memoryUsed?.length > 0;
-            const isOpen = !!expanded[i];
-            return (
-              <div key={i} className="msg-row" style={{ animationDelay: `${Math.min(i, 4) * 0.04}s` }}>
-                <div className="msg-who">
-                  <span className={`msg-role ${m.role === 'user' ? 'you' : 'sys'}`}>
-                    {m.role === 'user' ? 'YOU' : 'MNM'}
-                  </span>
-                  <span className="msg-ts">{fmt(m.ts)}</span>
-                </div>
-                <div className="msg-body">
-                  <div className="msg-text">{m.content}</div>
-                  {hasRecall && (
-                    <>
-                      <button
-                        className={`recall-toggle${isOpen ? ' open' : ''}`}
-                        onClick={() => toggleExpand(i)}
-                      >
-                        <span className="recall-chevron">{isOpen ? '▾' : '▸'}</span>
-                        {m.memoryUsed.length} fact{m.memoryUsed.length !== 1 ? 's' : ''} recalled
-                      </button>
-                      {isOpen && (
-                        <div className="recall-facts">
-                          {m.memoryUsed.slice(0, 6).map((mu, j) => {
-                            const id = typeof mu === 'string' ? mu : (mu.fact_id || '');
-                            const text = mu.content || mu.text || '';
-                            const score = mu.score != null ? Number(mu.score).toFixed(2) : null;
-                            return (
-                              <div key={j} className="recall-fact">
-                                <span className="recall-fact-id">{id.slice(0, 10)}</span>
-                                <span className="recall-fact-text">{text || id}</span>
-                                {score && <span className="recall-fact-score">{score}</span>}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
 
-          {loading && (
-            <div className="think-row">
-              <div className="think-who">
-                <span className="think-who-label">MNM</span>
+        {/* ── Loaded context strip ── */}
+        {ctxFacts.length > 0 && (
+          <div className={`ctx-strip${ctxOpen ? ' open' : ''}`}>
+            <div className="ctx-gutter" onClick={() => setCtxOpen(o => !o)}>
+              <span className="ctx-label">ctx</span>
+              <span className="ctx-chev">{ctxOpen ? '−' : '+'}</span>
+            </div>
+            <div className="ctx-body" onClick={() => !ctxOpen && setCtxOpen(true)}>
+              {ctxOpen ? (
+                <div className="ctx-fact-list">
+                  {ctxFacts.map(f => (
+                    <div key={f.fact_id} className="ctx-fact">
+                      <span
+                        className="ctx-fact-bar"
+                        style={{ background: confBar(f.confidence) }}
+                      />
+                      <span className="ctx-fact-type">{f.fact_type}</span>
+                      <span className="ctx-fact-text">{f.content}</span>
+                      <span className="ctx-fact-conf">{Number(f.confidence).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="ctx-summary">
+                  <span className="ctx-n">{ctxFacts.length} facts loaded</span>
+                  <span className="ctx-sep">·</span>
+                  <span className="ctx-peek">{ctxFacts[0]?.content?.slice(0, 80)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Messages ── */}
+        {messages.map((m, i) => {
+          const isUser   = m.role === 'user';
+          const hasRecall = !isUser && m.memoryUsed?.length > 0;
+          const isOpen   = !!expanded[i];
+          const isCopied = copiedIdx === i;
+          return (
+            <div
+              key={i}
+              className={`msg-row ${isUser ? 'user' : 'asst'}`}
+              style={{ animationDelay: `${Math.min(i, 4) * 0.04}s` }}
+            >
+              <div className="msg-gutter">
+                <span className="msg-time">{fmt(m.ts)}</span>
+                {isUser && <span className="msg-mark">▸</span>}
               </div>
-              <div className="think-body">
-                <span className="blink-cursor" />
-                querying memory
+
+              <div className="msg-body">
+                <button
+                  className={`msg-copy${isCopied ? ' done' : ''}`}
+                  onClick={() => copyMsg(i, m.content)}
+                  title="Copy"
+                >
+                  {isCopied ? '✓' : '⎘'}
+                </button>
+
+                <div className="msg-text">{m.content}</div>
+
+                {hasRecall && (
+                  <div className="recall-bar">
+                    <button
+                      className={`recall-btn${isOpen ? ' open' : ''}`}
+                      onClick={() => toggleExpand(i)}
+                    >
+                      memory
+                      <span className="recall-count">{m.memoryUsed.length}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="recall-list">
+                        {m.memoryUsed.slice(0, 6).map((mu, j) => {
+                          const id    = typeof mu === 'string' ? mu : (mu.fact_id || '');
+                          const text  = mu.content || mu.text || '';
+                          const score = mu.score != null ? Number(mu.score).toFixed(2) : null;
+                          return (
+                            <div key={j} className="recall-item">
+                              <span className="ri-id">{id.slice(0, 10)}</span>
+                              <span className="ri-text">{text || id}</span>
+                              {score && <span className="ri-score">{score}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
+          );
+        })}
+
+        {loading && (
+          <div className="think-row">
+            <div className="think-gutter">
+              <span className="think-dot" />
+            </div>
+            <div className="think-body">querying memory…</div>
+          </div>
+        )}
+
+        <div ref={bottomRef} />
       </div>
 
-      <div className="chat-foot-outer">
-        <div className="chat-foot">
+      {/* ── Input ── */}
+      <div className="chat-foot">
+        <div className="foot-gutter">
+          <span className="foot-prompt">›</span>
+        </div>
+        <div className="foot-body">
           <textarea
             ref={textareaRef}
             className="input-field"
@@ -176,19 +251,14 @@ export default function Chat({ sessionId }) {
             placeholder="Ask anything — memory context injected automatically"
             rows={1}
           />
-          <div className="input-foot">
+          <div className="foot-actions">
             <span className="sess-id">{sessionId.slice(0, 8)}</span>
-            <div className="input-actions">
-              <button className="btn-road" onClick={() => setShowPlan(true)}>roadmap</button>
-              <button
-                className="btn-send"
-                onClick={send}
-                disabled={!input.trim() || loading}
-              >
-                send ↵
-              </button>
-            </div>
+            <button className="btn-road" onClick={() => setShowPlan(true)}>roadmap</button>
+            <button className="btn-send" onClick={send} disabled={!input.trim() || loading}>
+              send ↵
+            </button>
           </div>
+          <div className="foot-note">conversation committed to memory after each turn</div>
         </div>
       </div>
 
