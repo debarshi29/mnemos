@@ -14,28 +14,30 @@ function fmtWhen(ts) {
 }
 
 function buildLogLines(e) {
+  const pad = s => String(s).padStart(3, ' ');
   const lines = [];
-  const pad = s => String(s).padStart(2, ' ');
-  lines.push({ t: `extract     ${pad(e.episodes_processed)} episodes processed`, c: 'dim' });
+  lines.push({ t: `extract    ${pad(e.episodes_processed)} episodes`, c: 'dim' });
   if (e.facts_created > 0 || e.facts_updated > 0) {
-    lines.push({ t: `dedupe      ${pad(e.facts_created)} created · ${e.facts_updated} updated`, c: 'dim' });
+    lines.push({ t: `dedupe     ${pad(e.facts_created)} created · ${e.facts_updated} updated`, c: 'dim' });
+  } else {
+    lines.push({ t: `dedupe       0 changes`, c: 'dim' });
   }
   if (e.contradictions_resolved > 0) {
-    lines.push({ t: `contradict  ${pad(e.contradictions_resolved)} contradiction${e.contradictions_resolved !== 1 ? 's' : ''} resolved`, c: 'warn' });
+    lines.push({ t: `contradict ${pad(e.contradictions_resolved)} resolved`, c: 'warn' });
     e.details?.filter(d => d.type === 'contradiction_resolved').slice(0, 2).forEach(d => {
-      const kept = d.winner_content?.slice(0, 60) || '';
-      lines.push({ t: `            kept "${kept}${kept.length >= 60 ? '…' : ''}"`, c: 'warn' });
+      const kept = d.winner_content?.slice(0, 56) || '';
+      lines.push({ t: `           kept "${kept}${kept.length >= 56 ? '…' : ''}"`, c: 'warn' });
     });
   } else {
-    lines.push({ t: `contradict  0 conflicts`, c: 'dim' });
+    lines.push({ t: `contradict   0 conflicts`, c: 'dim' });
   }
   if (e.facts_pruned > 0) {
-    lines.push({ t: `prune       ${pad(e.facts_pruned)} fact${e.facts_pruned !== 1 ? 's' : ''} below confidence floor → archived`, c: 'dim' });
+    lines.push({ t: `prune      ${pad(e.facts_pruned)} archived`, c: 'dim' });
   } else {
-    lines.push({ t: `prune       0 archived`, c: 'dim' });
+    lines.push({ t: `prune        0 archived`, c: 'dim' });
   }
   const total = (e.facts_created ?? 0) + (e.facts_updated ?? 0);
-  lines.push({ t: `done        ${total} facts consolidated`, c: 'ok' });
+  lines.push({ t: `✓ done     ${pad(total)} facts consolidated`, c: 'ok' });
   return lines;
 }
 
@@ -51,10 +53,7 @@ export default function ConsolidationLog() {
     getConsolidationLog()
       .then(d => {
         setEntries(d);
-        // Auto-expand the latest run
-        if (d.length > 0) {
-          setExpanded(prev => ({ ...prev, [d[0].run_id]: true }));
-        }
+        if (d.length > 0) setExpanded(prev => ({ ...prev, [d[0].run_id]: true }));
         setLoading(false);
       })
       .catch(e => { setError(e?.message || 'API unreachable'); setLoading(false); });
@@ -71,22 +70,22 @@ export default function ConsolidationLog() {
 
   return (
     <div className="sleep">
-      <div className="sleep-hd">
-        <span className="sleep-hd-title">sleep</span>
-        <span className="sleep-hd-sub">extract → dedupe → contradict → prune</span>
+      <div className="sleep-toolbar">
+        <span className="sleep-pipeline">
+          extract <em>→</em> dedupe <em>→</em> contradict <em>→</em> prune
+        </span>
         <button className="btn-run" onClick={runNow} disabled={running}>
           {running ? 'running…' : '▸ run now'}
         </button>
       </div>
 
-      {loading && <p className="sleep-load">Loading…</p>}
+      {loading && <p className="sleep-load">loading…</p>}
       {error   && <p className="sleep-err">{error}</p>}
 
       {!loading && !error && entries.length === 0 && (
         <div className="sleep-empty">
           <span className="sleep-empty-hint">
-            No runs yet.<br />
-            Hit "run now" to start the sleep cycle.
+            no runs yet<br />hit "run now" to start the sleep cycle
           </span>
         </div>
       )}
@@ -100,9 +99,10 @@ export default function ConsolidationLog() {
             return (
               <div key={e.run_id} className={`run${isLatest ? ' latest' : ''}`}>
                 <div className="run-hd" onClick={() => toggle(e.run_id)}>
+                  <span className="run-marker">{isLatest ? '●' : '○'}</span>
                   <span className="run-id">{e.run_id.slice(0, 8)}</span>
                   <span className="run-when">{fmtWhen(e.timestamp)}</span>
-                  <div className="run-stats-inline">
+                  <div className="run-stats">
                     <span className="run-stat">ext <span>{e.episodes_processed ?? 0}</span></span>
                     <span className="run-stat">mrg <span>{(e.facts_created ?? 0) + (e.facts_updated ?? 0)}</span></span>
                     <span className={`run-stat${e.contradictions_resolved > 0 ? ' warn' : ''}`}>
@@ -115,6 +115,11 @@ export default function ConsolidationLog() {
 
                 {open && (
                   <div className="run-log">
+                    <div className="log-prompt">
+                      <span>$</span>
+                      <span className="log-prompt-id">mnemos consolidate</span>
+                      <span style={{ marginLeft: 'auto', color: 'var(--t4)' }}>{e.run_id.slice(0, 8)}</span>
+                    </div>
                     {lines.map((l, i) => (
                       <div key={i} className={`log-line log-${l.c}`}>{l.t}</div>
                     ))}

@@ -5,24 +5,23 @@
   min-height: 0;
 }
 
-.sleep-hd {
-  padding: 18px 28px 16px;
-  border-bottom: 1px solid var(--b1);
-  flex-shrink: 0;
+/* Toolbar */
+.sleep-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--b1);
+  flex-shrink: 0;
 }
-.sleep-hd-title {
-  font-size: var(--txl);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-.sleep-hd-sub {
+.sleep-pipeline {
   font-family: var(--fm);
   font-size: var(--tx);
   color: var(--t4);
+  letter-spacing: 0.04em;
 }
+.sleep-pipeline em { color: var(--t3); font-style: normal; }
+
 .btn-run {
   margin-left: auto;
   font-family: var(--fm);
@@ -36,10 +35,9 @@
   transition: border-color 0.1s, color 0.1s;
 }
 .btn-run:hover:not(:disabled) { border-color: var(--ac); color: var(--ac); }
-.btn-run:disabled { color: var(--t4); border-color: var(--b1); }
 
-.sleep-load { font-family: var(--fm); font-size: var(--tx); color: var(--t4); padding: 14px 28px; }
-.sleep-err  { font-family: var(--fm); font-size: var(--tx); color: var(--re); padding: 10px 28px; }
+.sleep-load { font-family: var(--fm); font-size: var(--tx); color: var(--t4); padding: 14px 20px; }
+.sleep-err  { font-family: var(--fm); font-size: var(--tx); color: var(--re); padding: 10px 20px; }
 
 .sleep-empty {
   flex: 1;
@@ -52,7 +50,7 @@
   font-size: var(--tx);
   color: var(--t4);
   text-align: center;
-  line-height: 1.8;
+  line-height: 1.9;
 }
 
 /* ── Run list ── */
@@ -61,37 +59,44 @@
   overflow-y: auto;
 }
 
-.run {
-  border-bottom: 1px solid var(--b1);
-  animation: appear 0.18s ease both;
-}
+.run { border-bottom: 1px solid var(--b1); }
 
 .run-hd {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 28px;
+  gap: 16px;
+  padding: 9px 20px;
   cursor: pointer;
   transition: background 0.07s;
   user-select: none;
 }
 .run-hd:hover { background: var(--s2); }
-.run.latest .run-hd { background: var(--s2); }
-.run.latest .run-when { color: var(--t2); }
+.run.latest .run-hd { background: hsl(0,0%,7%); }
 
-.run-id {
+.run-marker {
   font-family: var(--fm);
   font-size: var(--tx);
   color: var(--t4);
   flex-shrink: 0;
-  width: 70px;
+  width: 8px;
 }
+.run.latest .run-marker { color: var(--gr); }
+
+.run-id {
+  font-family: var(--fm);
+  font-size: var(--tx);
+  color: var(--ac);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .run-when {
   font-family: var(--fm);
   font-size: var(--ts);
   color: var(--t3);
 }
-.run-stats-inline {
+
+.run-stats {
   display: flex;
   gap: 14px;
   margin-left: auto;
@@ -100,31 +105,47 @@
   font-family: var(--fm);
   font-size: var(--tx);
   color: var(--t4);
+  font-variant-numeric: tabular-nums;
 }
 .run-stat span { color: var(--am); }
 .run-stat.warn span { color: var(--re); }
 
 .run-chev {
   font-family: var(--fm);
-  font-size: var(--tm);
+  font-size: var(--ts);
   color: var(--t4);
-  width: 14px;
+  width: 12px;
   text-align: center;
   flex-shrink: 0;
 }
 
-/* ── Log lines ── */
+/* ── Log lines — terminal style ── */
 .run-log {
-  padding: 8px 28px 12px 28px;
   border-top: 1px solid var(--b1);
-  background: var(--s1);
-  animation: appear 0.13s ease both;
+  padding: 10px 20px 14px;
+  background: var(--bg);
+  animation: fadein 0.12s ease both;
 }
+.log-prompt {
+  font-family: var(--fm);
+  font-size: var(--tx);
+  color: var(--t4);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.log-prompt-id { color: var(--ac); }
+
 .log-line {
   font-family: var(--fm);
   font-size: var(--tx);
-  line-height: 1.9;
+  line-height: 2;
   white-space: pre;
+  padding-left: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 0;
 }
 .log-dim  { color: var(--t3); }
 .log-ok   { color: var(--gr); }
