@@ -22,6 +22,8 @@ Hosted AI assistants hide their memory plumbing. mnemos makes it visible, inspec
 
 The reference implementation is a learning copilot. The memory layer is the thesis — it generalises to any domain where an AI needs to know things about you across sessions.
 
+📄 **[Full technical documentation](docs/mnemos_documentation.pdf)** — every data model, algorithm (decay-ranked retrieval, contradiction resolution, EMA confidence updates), API endpoint, and LangGraph state machine, in one PDF.
+
 ---
 
 ## Architecture
@@ -344,6 +346,7 @@ mnemos/
 │       ├── Goals.jsx          # Phased roadmap with status tracking
 │       └── ConsolidationLog.jsx
 ├── ADRs/                      # Architecture decision records (001–006)
+├── docs/                      # Full LaTeX technical documentation + PDF
 ├── evals/                     # Evaluation harness + synthetic scripts
 ├── config.yaml
 ├── docker-compose.yml
