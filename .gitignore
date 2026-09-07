@@ -13,3 +13,13 @@ build/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+
+# Claude Design canvas scratch files
+*.dc.html
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
