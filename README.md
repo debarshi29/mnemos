@@ -22,6 +22,8 @@ Hosted AI assistants hide their memory plumbing. mnemos makes it visible, inspec
 
 The reference implementation is a learning copilot. The memory layer is the thesis — it generalises to any domain where an AI needs to know things about you across sessions.
 
+📐 **[Design & reference docs](docs/README.md)** — High-Level Design, Low-Level Design, data model, API reference, sequence + C4 diagrams, and non-functional requirements.
+
 📄 **[Full technical documentation](docs/mnemos_documentation.pdf)** — every data model, algorithm (decay-ranked retrieval, contradiction resolution, EMA confidence updates), API endpoint, and LangGraph state machine, in one PDF.
 
 ---
